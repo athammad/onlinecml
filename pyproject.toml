@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onlinecml"
+version = "0.1.0"
+description = "Online Causal Machine Learning in Python"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+
+keywords = [
+    "causal inference", "online learning", "streaming",
+    "treatment effects", "uplift modeling", "machine learning"
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "river>=0.23",
+    "numpy>=2.0",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "hypothesis",
+]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
+
+[project.urls]
+Homepage      = "https://onlinecml.org"
+Documentation = "https://docs.onlinecml.org"
+Repository    = "https://github.com/yourname/onlinecml"
+Issues        = "https://github.com/yourname/onlinecml/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["onlinecml*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=onlinecml --cov-report=term-missing --cov-fail-under=90"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "N"]
+ignore = ["N803", "N806"]  # allow uppercase X, W, Y (causal inference convention)
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+ignore_missing_imports = true
