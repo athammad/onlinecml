@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "onlinecml"
-version = "0.1.0"
+version = "0.3.0"
 description = "Online Causal Machine Learning in Python"
 readme = "README.md"
 license = {text = "MIT"}
@@ -36,6 +36,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-cov",
+    "pytest-benchmark",
     "ruff",
     "mypy",
     "hypothesis",

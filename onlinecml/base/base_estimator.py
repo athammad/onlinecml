@@ -125,7 +125,8 @@ class BaseOnlineEstimator(Base):
         Equivalent to creating a fresh instance with the same constructor
         arguments. All learned state is discarded.
         """
-        self.__init__(**self._get_params())  # type: ignore[misc]
+        fresh = self.clone()
+        self.__dict__.update(fresh.__dict__)
 
     @property
     def n_seen(self) -> int:
