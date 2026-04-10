@@ -67,6 +67,10 @@ class EpsilonGreedy(BasePolicy):
         self.seed = seed
         # Standard library random — not numpy (avoids serialization issues)
         self._rng = random.Random(seed)
+        # Internal arm reward tracking (used when cate_score is not provided)
+        self._arm_sums: list[float] = [0.0, 0.0]
+        self._arm_counts: list[int] = [0, 0]
+        self._last_arm: int | None = None
 
     def choose(self, cate_score: float, step: int) -> tuple[int, float]:
         """Choose a treatment assignment.
@@ -90,12 +94,32 @@ class EpsilonGreedy(BasePolicy):
         if self._rng.random() < eps:
             # Explore: random treatment, uniform propensity
             treatment = self._rng.randint(0, 1)
+            self._last_arm = treatment
             return treatment, 0.5
 
-        # Exploit: pick treatment with higher estimated effect
+        # Exploit: use cate_score if non-zero (causal model available),
+        # else fall back to internal arm reward estimates.
+        if cate_score == 0.0:
+            mu1 = self._arm_sums[1] / self._arm_counts[1] if self._arm_counts[1] > 0 else 0.5
+            mu0 = self._arm_sums[0] / self._arm_counts[0] if self._arm_counts[0] > 0 else 0.5
+            cate_score = mu1 - mu0
         treatment = 1 if cate_score > 0 else 0
+        self._last_arm = treatment
         propensity = 1.0 - eps
         return treatment, propensity
+
+    def update(self, reward: float) -> None:
+        """Update internal arm reward estimate after observing a reward.
+
+        Parameters
+        ----------
+        reward : float
+            Observed reward for the arm chosen in the most recent
+            ``choose`` call. No-op if ``choose`` has not been called yet.
+        """
+        if self._last_arm is not None:
+            self._arm_sums[self._last_arm] += reward
+            self._arm_counts[self._last_arm] += 1
 
     def current_epsilon(self, step: int) -> float:
         """Return the current epsilon value at a given step.

@@ -63,6 +63,8 @@ class OnlineTLearner(BaseOnlineEstimator):
         self._ate_stats: RunningStats = RunningStats()
         self._n_treated: int = 0
         self._n_control: int = 0
+        self._warned_treated: bool = False
+        self._warned_control: bool = False
 
     def learn_one(
         self,
@@ -134,16 +136,18 @@ class OnlineTLearner(BaseOnlineEstimator):
             from that model defaults to 0 (River's untrained regressor
             default), which may bias the CATE estimate.
         """
-        if self._n_treated == 0:
+        if self._n_treated == 0 and not self._warned_treated:
             warnings.warn(
                 "treated_model has not seen any data yet; CATE estimate may be biased.",
                 UserWarning,
                 stacklevel=2,
             )
-        if self._n_control == 0:
+            self._warned_treated = True
+        if self._n_control == 0 and not self._warned_control:
             warnings.warn(
                 "control_model has not seen any data yet; CATE estimate may be biased.",
                 UserWarning,
                 stacklevel=2,
             )
+            self._warned_control = True
         return self.treated_model.predict_one(x) - self.control_model.predict_one(x)
