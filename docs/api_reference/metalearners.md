@@ -1,9 +1,9 @@
 # Meta-Learners
 
-## OnlineSLearner
-
 ::: onlinecml.metalearners.s_learner.OnlineSLearner
 
-## OnlineTLearner
-
 ::: onlinecml.metalearners.t_learner.OnlineTLearner
+
+::: onlinecml.metalearners.x_learner.OnlineXLearner
+
+::: onlinecml.metalearners.r_learner.OnlineRLearner
