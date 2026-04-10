@@ -48,8 +48,8 @@ docs = [
 [project.urls]
 Homepage      = "https://onlinecml.org"
 Documentation = "https://docs.onlinecml.org"
-Repository    = "https://github.com/yourname/onlinecml"
-Issues        = "https://github.com/yourname/onlinecml/issues"
+Repository    = "https://github.com/athmammad/onlinecml"
+Issues        = "https://github.com/athmammad/onlinecml/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -65,6 +65,9 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "N"]
 ignore = ["N803", "N806"]  # allow uppercase X, W, Y (causal inference convention)
+
+[tool.coverage.run]
+omit = ["onlinecml/datasets/real_world.py"]
 
 [tool.mypy]
 python_version = "3.12"
