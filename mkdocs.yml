@@ -1,8 +1,8 @@
 site_name: OnlineCML
 site_description: Online Causal Machine Learning in Python
 site_url: https://docs.onlinecml.org
-repo_url: https://github.com/yourname/onlinecml
-repo_name: yourname/onlinecml
+repo_url: https://github.com/athammad/onlinecml
+repo_name: athammad/onlinecml
 
 theme:
   name: material
@@ -42,14 +42,25 @@ nav:
   - Getting Started:
     - Installation: getting_started/installation.md
     - Quickstart: getting_started/quickstart.md
+  - Theory:
+    - Potential Outcomes: theory/potential_outcomes.md
+    - Three Assumptions: theory/three_assumptions.md
+    - Robinson Transformation: theory/robinson_transformation.md
+    - Online Learning Basics: theory/online_learning_basics.md
   - API Reference:
     - Base: api_reference/base.md
     - Propensity: api_reference/propensity.md
     - Reweighting: api_reference/reweighting.md
     - Meta-Learners: api_reference/metalearners.md
+    - Forests: api_reference/forests.md
+    - Matching: api_reference/matching.md
     - Policy: api_reference/policy.md
     - Diagnostics: api_reference/diagnostics.md
     - Datasets: api_reference/datasets.md
+    - Evaluation: api_reference/evaluation.md
+  - Contributing:
+    - How to Contribute: contributing/contributing.md
+    - Adding an Estimator: contributing/adding_estimator.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -61,3 +72,9 @@ markdown_extensions:
   - pymdownx.details
   - attr_list
   - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

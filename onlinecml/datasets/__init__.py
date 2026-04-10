@@ -1,5 +1,6 @@
 """Synthetic and real-world streaming datasets for causal inference."""
 
+from onlinecml.datasets.continuous_treatment import ContinuousTreatmentStream
 from onlinecml.datasets.drifting_causal import DriftingCausalStream
 from onlinecml.datasets.heterogeneous_causal import HeterogeneousCausalStream
 from onlinecml.datasets.linear_causal import LinearCausalStream
@@ -11,6 +12,7 @@ __all__ = [
     "HeterogeneousCausalStream",
     "DriftingCausalStream",
     "UnbalancedCausalStream",
+    "ContinuousTreatmentStream",
     "load_lalonde",
     "load_ihdp",
     "load_news",

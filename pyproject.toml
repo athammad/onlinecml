@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "onlinecml"
-version = "0.3.0"
+version = "1.0.0"
 description = "Online Causal Machine Learning in Python"
 readme = "README.md"
 license = {text = "MIT"}

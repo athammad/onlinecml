@@ -3,13 +3,14 @@
 Causal inference for the real world — one observation at a time.
 """
 
-__version__ = "0.3.0"
+__version__ = "1.0.0"
 
 from onlinecml import (
     base,
     datasets,
     diagnostics,
     evaluation,
+    forests,
     matching,
     metalearners,
     policy,
@@ -23,6 +24,7 @@ __all__ = [
     "datasets",
     "diagnostics",
     "evaluation",
+    "forests",
     "matching",
     "metalearners",
     "policy",

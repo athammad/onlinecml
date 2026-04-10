@@ -1,9 +1,9 @@
 # Reweighting
 
-## OnlineIPW
-
 ::: onlinecml.reweighting.ipw.OnlineIPW
 
-## OnlineAIPW
-
 ::: onlinecml.reweighting.aipw.OnlineAIPW
+
+::: onlinecml.reweighting.overlap_weights.OnlineOverlapWeights
+
+::: onlinecml.reweighting.cbps.OnlineCBPS
