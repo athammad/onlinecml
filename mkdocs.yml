@@ -28,6 +28,9 @@ theme:
 
 plugins:
   - search
+  - mkdocs-jupyter:
+      execute: false
+      include_source: true
   - mkdocstrings:
       handlers:
         python:
@@ -58,6 +61,18 @@ nav:
     - Diagnostics: api_reference/diagnostics.md
     - Datasets: api_reference/datasets.md
     - Evaluation: api_reference/evaluation.md
+  - Examples:
+    - Quickstart: examples/01_quickstart.ipynb
+    - IPW vs AIPW: examples/02_ipw_vs_aipw.ipynb
+    - Meta-Learner Comparison: examples/03_metalearner_comparison.ipynb
+    - Online Matching: examples/04_online_matching.ipynb
+    - Policy Exploration: examples/05_policy_exploration.ipynb
+    - Exploration Policies Deep Dive: examples/06_exploration_policies.ipynb
+    - Diagnostics: examples/07_diagnostics.ipynb
+    - Concept Drift: examples/08_concept_drift.ipynb
+    - Marketing Case Study: examples/09_marketing_case_study.ipynb
+    - Clinical Trial: examples/10_clinical_trial.ipynb
+    - Online vs Batch: examples/11_vs_econml_batch.ipynb
   - Contributing:
     - How to Contribute: contributing/contributing.md
     - Adding an Estimator: contributing/adding_estimator.md
