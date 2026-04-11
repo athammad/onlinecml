@@ -1040,6 +1040,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_ate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_ate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_ci
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_one" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1858,6 +1880,28 @@
     <span class="md-ellipsis">
       
         learn_one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_ate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_ate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_ci
       
     </span>
   </a>
@@ -3710,7 +3754,41 @@ classification. Machine Learning, 106(9), 1469-1495.</p>
 <span class="normal"><a href="#__codelineno-0-262">262</a></span>
 <span class="normal"><a href="#__codelineno-0-263">263</a></span>
 <span class="normal"><a href="#__codelineno-0-264">264</a></span>
-<span class="normal"><a href="#__codelineno-0-265">265</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="k">class</span><span class="w"> </span><span class="nc">OnlineCausalForest</span><span class="p">(</span><span class="n">BaseOnlineEstimator</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-265">265</a></span>
+<span class="normal"><a href="#__codelineno-0-266">266</a></span>
+<span class="normal"><a href="#__codelineno-0-267">267</a></span>
+<span class="normal"><a href="#__codelineno-0-268">268</a></span>
+<span class="normal"><a href="#__codelineno-0-269">269</a></span>
+<span class="normal"><a href="#__codelineno-0-270">270</a></span>
+<span class="normal"><a href="#__codelineno-0-271">271</a></span>
+<span class="normal"><a href="#__codelineno-0-272">272</a></span>
+<span class="normal"><a href="#__codelineno-0-273">273</a></span>
+<span class="normal"><a href="#__codelineno-0-274">274</a></span>
+<span class="normal"><a href="#__codelineno-0-275">275</a></span>
+<span class="normal"><a href="#__codelineno-0-276">276</a></span>
+<span class="normal"><a href="#__codelineno-0-277">277</a></span>
+<span class="normal"><a href="#__codelineno-0-278">278</a></span>
+<span class="normal"><a href="#__codelineno-0-279">279</a></span>
+<span class="normal"><a href="#__codelineno-0-280">280</a></span>
+<span class="normal"><a href="#__codelineno-0-281">281</a></span>
+<span class="normal"><a href="#__codelineno-0-282">282</a></span>
+<span class="normal"><a href="#__codelineno-0-283">283</a></span>
+<span class="normal"><a href="#__codelineno-0-284">284</a></span>
+<span class="normal"><a href="#__codelineno-0-285">285</a></span>
+<span class="normal"><a href="#__codelineno-0-286">286</a></span>
+<span class="normal"><a href="#__codelineno-0-287">287</a></span>
+<span class="normal"><a href="#__codelineno-0-288">288</a></span>
+<span class="normal"><a href="#__codelineno-0-289">289</a></span>
+<span class="normal"><a href="#__codelineno-0-290">290</a></span>
+<span class="normal"><a href="#__codelineno-0-291">291</a></span>
+<span class="normal"><a href="#__codelineno-0-292">292</a></span>
+<span class="normal"><a href="#__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="k">class</span><span class="w"> </span><span class="nc">OnlineCausalForest</span><span class="p">(</span><span class="n">BaseOnlineEstimator</span><span class="p">):</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensemble of CausalHoeffdingTrees for online CATE estimation.</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17"></a>
 <a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="sd">    Grows ``n_trees`` independent ``CausalHoeffdingTree`` instances in parallel.</span>
@@ -3873,94 +3951,128 @@ classification. Machine Learning, 106(9), 1469-1495.</p>
 <a id="__codelineno-0-175" name="__codelineno-0-175"></a>                        <span class="bp">self</span><span class="o">.</span><span class="n">_drift_detectors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">=</span> <span class="n">ADWIN</span><span class="p">()</span>
 <a id="__codelineno-0-176" name="__codelineno-0-176"></a>                        <span class="bp">self</span><span class="o">.</span><span class="n">_pred_stats</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>       <span class="o">=</span> <span class="n">RunningStats</span><span class="p">()</span>  <span class="c1"># type: ignore[index]</span>
 <a id="__codelineno-0-177" name="__codelineno-0-177"></a>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_ate_stats</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">predict_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict CATE as the mean across all tree predictions.</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">        x : dict</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">            Covariate dictionary.</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">        float</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="sd">            Mean CATE across all trees. Returns ``0.0`` when untrained.</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>        <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="k">if</span> <span class="n">preds</span> <span class="k">else</span> <span class="mf">0.0</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>    <span class="c1"># Properties</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">n_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of nodes in each tree.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">n_nodes</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">n_leaves</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of leaf nodes in each tree.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">n_leaves</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>    <span class="c1"># Internals</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_new_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalHoeffdingTree</span><span class="p">:</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a fresh ``CausalHoeffdingTree`` for position ``index``.</span>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">predict_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict CATE as the mean across all tree predictions.</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">        x : dict</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">            Covariate dictionary.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">        float</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">            Mean CATE across all trees. Returns ``0.0`` when untrained.</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="k">if</span> <span class="n">preds</span> <span class="k">else</span> <span class="mf">0.0</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">predict_ate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current ATE estimate as the mean of tree DR-corrected ATEs.</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">        Each tree maintains a running mean of its own DR pseudo-outcomes.</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">        The forest ATE is their simple average, which converges to the true</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">        ATE without cold-start bias from untrained linear leaf models.</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        float</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">            Mean ATE across all trees. Returns ``0.0`` before any data.</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="n">ates</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_ate</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ates</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ates</span><span class="p">)</span> <span class="k">if</span> <span class="n">ates</span> <span class="k">else</span> <span class="mf">0.0</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">predict_ci</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a confidence interval for the ATE as the mean of tree CIs.</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">        alpha : float</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">            Significance level. Default 0.05 gives a 95% CI.</span>
 <a id="__codelineno-0-216" name="__codelineno-0-216"></a>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">        index : int</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="sd">            Tree index, used to derive a per-tree seed from ``self.seed``.</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">        CausalHoeffdingTree</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">            A freshly initialised tree with this forest&#39;s hyperparameters.</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>        <span class="k">return</span> <span class="n">CausalHoeffdingTree</span><span class="p">(</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>            <span class="n">grace_period</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grace_period</span><span class="p">,</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>            <span class="n">delta</span>           <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>            <span class="n">tau</span>             <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">,</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>            <span class="n">max_depth</span>       <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a>            <span class="n">min_arm_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_arm_samples</span><span class="p">,</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>            <span class="n">mtry</span>            <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtry</span><span class="p">,</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>            <span class="n">outcome_range</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_range</span><span class="p">,</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>            <span class="n">clip_ps</span>         <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_ps</span><span class="p">,</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>            <span class="n">seed</span>            <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">+</span> <span class="n">index</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="p">)</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">        lower : float</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="sd">            Mean lower bound across all tree CIs.</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">        upper : float</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">            Mean upper bound across all tree CIs.</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>        <span class="n">cis</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_ci</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>        <span class="n">lowers</span> <span class="o">=</span> <span class="p">[</span><span class="n">lo</span> <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cis</span><span class="p">]</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a>        <span class="n">uppers</span> <span class="o">=</span> <span class="p">[</span><span class="n">hi</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">cis</span><span class="p">]</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cis</span><span class="p">)</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>        <span class="k">return</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">lowers</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">uppers</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="k">else</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">))</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a>    <span class="c1"># Properties</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">n_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of nodes in each tree.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">n_nodes</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
 <a id="__codelineno-0-238" name="__codelineno-0-238"></a>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_poisson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw from Poisson(lam) using Knuth&#39;s algorithm (lam ≤ 20).</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="sd">        lam : float</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="sd">            Poisson rate parameter.</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">        int</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">            A non-negative integer sample from Poisson(lam).</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>        <span class="k">if</span> <span class="n">lam</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>            <span class="k">return</span> <span class="mi">0</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a>        <span class="n">L</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">lam</span><span class="p">)</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a>        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a>        <span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a>        <span class="k">while</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="n">L</span><span class="p">:</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a>            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>            <span class="n">p</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a>        <span class="k">return</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset the forest to its initial (untrained) state.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>        <span class="n">fresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fresh</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">n_leaves</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of leaf nodes in each tree.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">n_leaves</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>    <span class="c1"># Internals</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_new_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalHoeffdingTree</span><span class="p">:</span>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a fresh ``CausalHoeffdingTree`` for position ``index``.</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">        index : int</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">            Tree index, used to derive a per-tree seed from ``self.seed``.</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">        CausalHoeffdingTree</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">            A freshly initialised tree with this forest&#39;s hyperparameters.</span>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-261" name="__codelineno-0-261"></a>        <span class="k">return</span> <span class="n">CausalHoeffdingTree</span><span class="p">(</span>
+<a id="__codelineno-0-262" name="__codelineno-0-262"></a>            <span class="n">grace_period</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grace_period</span><span class="p">,</span>
+<a id="__codelineno-0-263" name="__codelineno-0-263"></a>            <span class="n">delta</span>           <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+<a id="__codelineno-0-264" name="__codelineno-0-264"></a>            <span class="n">tau</span>             <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">,</span>
+<a id="__codelineno-0-265" name="__codelineno-0-265"></a>            <span class="n">max_depth</span>       <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
+<a id="__codelineno-0-266" name="__codelineno-0-266"></a>            <span class="n">min_arm_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_arm_samples</span><span class="p">,</span>
+<a id="__codelineno-0-267" name="__codelineno-0-267"></a>            <span class="n">mtry</span>            <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtry</span><span class="p">,</span>
+<a id="__codelineno-0-268" name="__codelineno-0-268"></a>            <span class="n">outcome_range</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_range</span><span class="p">,</span>
+<a id="__codelineno-0-269" name="__codelineno-0-269"></a>            <span class="n">clip_ps</span>         <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_ps</span><span class="p">,</span>
+<a id="__codelineno-0-270" name="__codelineno-0-270"></a>            <span class="n">seed</span>            <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">+</span> <span class="n">index</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-271" name="__codelineno-0-271"></a>        <span class="p">)</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_poisson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw from Poisson(lam) using Knuth&#39;s algorithm (lam ≤ 20).</span>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a><span class="sd">        lam : float</span>
+<a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="sd">            Poisson rate parameter.</span>
+<a id="__codelineno-0-280" name="__codelineno-0-280"></a>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">        int</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">            A non-negative integer sample from Poisson(lam).</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="k">if</span> <span class="n">lam</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>            <span class="k">return</span> <span class="mi">0</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="n">L</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">lam</span><span class="p">)</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>        <span class="k">while</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="n">L</span><span class="p">:</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>            <span class="n">p</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a>        <span class="k">return</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset the forest to its initial (untrained) state.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>        <span class="n">fresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fresh</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4160,9 +4272,7 @@ ADWIN detector and resets the tree if drift is detected.</p>
 <span class="normal"><a href="#__codelineno-0-173">173</a></span>
 <span class="normal"><a href="#__codelineno-0-174">174</a></span>
 <span class="normal"><a href="#__codelineno-0-175">175</a></span>
-<span class="normal"><a href="#__codelineno-0-176">176</a></span>
-<span class="normal"><a href="#__codelineno-0-177">177</a></span>
-<span class="normal"><a href="#__codelineno-0-178">178</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-176">176</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span>
 <a id="__codelineno-0-135" name="__codelineno-0-135"></a>    <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-0-136" name="__codelineno-0-136"></a>    <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
 <a id="__codelineno-0-137" name="__codelineno-0-137"></a>    <span class="n">treatment</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -4205,8 +4315,206 @@ ADWIN detector and resets the tree if drift is detected.</p>
 <a id="__codelineno-0-174" name="__codelineno-0-174"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>            <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_tree</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
 <a id="__codelineno-0-175" name="__codelineno-0-175"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">_drift_detectors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">=</span> <span class="n">ADWIN</span><span class="p">()</span>
 <a id="__codelineno-0-176" name="__codelineno-0-176"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">_pred_stats</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>       <span class="o">=</span> <span class="n">RunningStats</span><span class="p">()</span>  <span class="c1"># type: ignore[index]</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_ate_stats</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_ate" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">predict_ate</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the current ATE estimate as the mean of tree DR-corrected ATEs.</p>
+<p>Each tree maintains a running mean of its own DR pseudo-outcomes.
+The forest ATE is their simple average, which converges to the true
+ATE without cold-start bias from untrained linear leaf models.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean ATE across all trees. Returns <code>0.0</code> before any data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>onlinecml/forests/online_causal_forest.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-194">194</a></span>
+<span class="normal"><a href="#__codelineno-0-195">195</a></span>
+<span class="normal"><a href="#__codelineno-0-196">196</a></span>
+<span class="normal"><a href="#__codelineno-0-197">197</a></span>
+<span class="normal"><a href="#__codelineno-0-198">198</a></span>
+<span class="normal"><a href="#__codelineno-0-199">199</a></span>
+<span class="normal"><a href="#__codelineno-0-200">200</a></span>
+<span class="normal"><a href="#__codelineno-0-201">201</a></span>
+<span class="normal"><a href="#__codelineno-0-202">202</a></span>
+<span class="normal"><a href="#__codelineno-0-203">203</a></span>
+<span class="normal"><a href="#__codelineno-0-204">204</a></span>
+<span class="normal"><a href="#__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#__codelineno-0-206">206</a></span>
+<span class="normal"><a href="#__codelineno-0-207">207</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_ate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the current ATE estimate as the mean of tree DR-corrected ATEs.</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">    Each tree maintains a running mean of its own DR pseudo-outcomes.</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    The forest ATE is their simple average, which converges to the true</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">    ATE without cold-start bias from untrained linear leaf models.</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">    float</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        Mean ATE across all trees. Returns ``0.0`` before any data.</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="n">ates</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_ate</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ates</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ates</span><span class="p">)</span> <span class="k">if</span> <span class="n">ates</span> <span class="k">else</span> <span class="mf">0.0</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="onlinecml.forests.online_causal_forest.OnlineCausalForest.predict_ci" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">predict_ci</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a confidence interval for the ATE as the mean of tree CIs.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>alpha</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Significance level. Default 0.05 gives a 95% CI.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.05</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>lower</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean lower bound across all tree CIs.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>upper</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mean upper bound across all tree CIs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>onlinecml/forests/online_causal_forest.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-209">209</a></span>
+<span class="normal"><a href="#__codelineno-0-210">210</a></span>
+<span class="normal"><a href="#__codelineno-0-211">211</a></span>
+<span class="normal"><a href="#__codelineno-0-212">212</a></span>
+<span class="normal"><a href="#__codelineno-0-213">213</a></span>
+<span class="normal"><a href="#__codelineno-0-214">214</a></span>
+<span class="normal"><a href="#__codelineno-0-215">215</a></span>
+<span class="normal"><a href="#__codelineno-0-216">216</a></span>
+<span class="normal"><a href="#__codelineno-0-217">217</a></span>
+<span class="normal"><a href="#__codelineno-0-218">218</a></span>
+<span class="normal"><a href="#__codelineno-0-219">219</a></span>
+<span class="normal"><a href="#__codelineno-0-220">220</a></span>
+<span class="normal"><a href="#__codelineno-0-221">221</a></span>
+<span class="normal"><a href="#__codelineno-0-222">222</a></span>
+<span class="normal"><a href="#__codelineno-0-223">223</a></span>
+<span class="normal"><a href="#__codelineno-0-224">224</a></span>
+<span class="normal"><a href="#__codelineno-0-225">225</a></span>
+<span class="normal"><a href="#__codelineno-0-226">226</a></span>
+<span class="normal"><a href="#__codelineno-0-227">227</a></span>
+<span class="normal"><a href="#__codelineno-0-228">228</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_ci</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a confidence interval for the ATE as the mean of tree CIs.</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">    alpha : float</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">        Significance level. Default 0.05 gives a 95% CI.</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">    lower : float</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="sd">        Mean lower bound across all tree CIs.</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">    upper : float</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">        Mean upper bound across all tree CIs.</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>    <span class="n">cis</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_ci</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>    <span class="n">lowers</span> <span class="o">=</span> <span class="p">[</span><span class="n">lo</span> <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">cis</span><span class="p">]</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a>    <span class="n">uppers</span> <span class="o">=</span> <span class="p">[</span><span class="n">hi</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">cis</span><span class="p">]</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cis</span><span class="p">)</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>    <span class="k">return</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">lowers</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">uppers</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="k">else</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4283,7 +4591,9 @@ ADWIN detector and resets the tree if drift is detected.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>onlinecml/forests/online_causal_forest.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-180">180</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-178">178</a></span>
+<span class="normal"><a href="#__codelineno-0-179">179</a></span>
+<span class="normal"><a href="#__codelineno-0-180">180</a></span>
 <span class="normal"><a href="#__codelineno-0-181">181</a></span>
 <span class="normal"><a href="#__codelineno-0-182">182</a></span>
 <span class="normal"><a href="#__codelineno-0-183">183</a></span>
@@ -4295,23 +4605,21 @@ ADWIN detector and resets the tree if drift is detected.</p>
 <span class="normal"><a href="#__codelineno-0-189">189</a></span>
 <span class="normal"><a href="#__codelineno-0-190">190</a></span>
 <span class="normal"><a href="#__codelineno-0-191">191</a></span>
-<span class="normal"><a href="#__codelineno-0-192">192</a></span>
-<span class="normal"><a href="#__codelineno-0-193">193</a></span>
-<span class="normal"><a href="#__codelineno-0-194">194</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict CATE as the mean across all tree predictions.</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">    x : dict</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">        Covariate dictionary.</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">    float</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="sd">        Mean CATE across all trees. Returns ``0.0`` when untrained.</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>    <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="k">if</span> <span class="n">preds</span> <span class="k">else</span> <span class="mf">0.0</span>
+<span class="normal"><a href="#__codelineno-0-192">192</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict CATE as the mean across all tree predictions.</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">    x : dict</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">        Covariate dictionary.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">    float</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">        Mean CATE across all trees. Returns ``0.0`` when untrained.</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees</span><span class="p">]</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="k">if</span> <span class="n">preds</span> <span class="k">else</span> <span class="mf">0.0</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4334,13 +4642,13 @@ ADWIN detector and resets the tree if drift is detected.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>onlinecml/forests/online_causal_forest.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-262">262</a></span>
-<span class="normal"><a href="#__codelineno-0-263">263</a></span>
-<span class="normal"><a href="#__codelineno-0-264">264</a></span>
-<span class="normal"><a href="#__codelineno-0-265">265</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Reset the forest to its initial (untrained) state.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>    <span class="n">fresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>    <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fresh</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Reset the forest to its initial (untrained) state.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>    <span class="n">fresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>    <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fresh</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4414,7 +4722,7 @@ ADWIN detector and resets the tree if drift is detected.</p>
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script src="../../javascripts/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
