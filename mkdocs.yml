@@ -6,7 +6,7 @@ repo_name: athammad/onlinecml
 
 theme:
   name: material
-palette:
+  palette:
     - scheme: default
       primary: indigo
       accent: indigo
