@@ -2,10 +2,9 @@
 
 > Causal inference for the real world — one observation at a time.
 
-[![Tests](https://github.com/yourname/onlinecml/actions/workflows/ci.yml/badge.svg)](https://github.com/yourname/onlinecml/actions)
-[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://github.com/yourname/onlinecml)
-[![PyPI](https://img.shields.io/pypi/v/onlinecml)](https://pypi.org/project/onlinecml/)
-[![Docs](https://img.shields.io/badge/docs-onlinecml.org-blue)](https://docs.onlinecml.org)
+[![Tests](https://github.com/athammad/onlinecml/actions/workflows/ci.yml/badge.svg)](https://github.com/athammad/onlinecml/actions)
+[![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)](https://github.com/athammad/onlinecml)
+[![Docs](https://img.shields.io/badge/docs-athammad.github.io%2Fonlinecml-blue)](https://athammad.github.io/onlinecml/)
 
 ## Why OnlineCML?
 
@@ -40,20 +39,36 @@ print(f"ATE:   {estimator.predict_ate():.3f}")  # → ~2.0
 print(f"95%CI: {estimator.predict_ci()}")
 ```
 
-## Methods (v0.1)
+## Methods
 
 | Method | Class | ATE | Individual CATE | Doubly Robust |
 |---|---|:---:|:---:|:---:|
 | Inverse Probability Weighting | `OnlineIPW` | ✓ | — | — |
 | Augmented IPW | `OnlineAIPW` | ✓ | ✓ | ✓ |
+| Overlap Weights | `OnlineOverlapWeights` | ✓ | — | — |
 | S-Learner | `OnlineSLearner` | ✓ | ✓ | — |
 | T-Learner | `OnlineTLearner` | ✓ | ✓ | — |
+| X-Learner | `OnlineXLearner` | ✓ | ✓ | — |
+| R-Learner | `OnlineRLearner` | ✓ | ✓ | — |
+| Online Matching | `OnlineMatching` | ✓ | ✓ | — |
+| Caliper Matching | `OnlineCaliperMatching` | ✓ | ✓ | — |
+| Causal Hoeffding Tree | `CausalHoeffdingTree` | ✓ | ✓ | ✓ |
+| Online Causal Forest | `OnlineCausalForest` | ✓ | ✓ | ✓ |
 
-**Policies:** `EpsilonGreedy` (with exponential decay)
+**Novel contributions:** `CausalHoeffdingTree` and `OnlineCausalForest` implement a
+custom causal split criterion that maximises between-child CATE variance rather than
+outcome MSE, with linear leaf models, doubly robust correction, multi-threshold split
+search, and per-tree ADWIN drift detection.
 
-**Diagnostics:** `OnlineSMD`, `ATETracker` (with convergence plot)
+**Policies:** `EpsilonGreedy`, `ThompsonSampling`, `UCB`
 
-**Datasets:** `LinearCausalStream`, `HeterogeneousCausalStream`
+**Diagnostics:** `OnlineSMD`, `ATETracker` (with convergence plot and forgetting factor),
+`OverlapChecker`, `ConceptDriftMonitor`
+
+**Datasets:** `LinearCausalStream`, `HeterogeneousCausalStream`, `DriftingCausalStream`,
+`UnbalancedCausalStream`, `ContinuousTreatmentStream`
+
+**Evaluation:** `progressive_causal_score`, `PEHE`, `ATEError`, `UpliftAUC`, `QiniCoefficient`
 
 ## How it differs from batch libraries
 
@@ -64,12 +79,15 @@ print(f"95%CI: {estimator.predict_ci()}")
 | Concept drift | ✗ | ✗ | ✗ | **✓** |
 | Exploration policy | ✗ | ✗ | ✗ | **✓** |
 | River compatible | ✗ | ✗ | ✗ | **✓** |
-| IPW / DR | ✓ | ✓ | ✓ | **✓** |
+| Online causal forest | ✗ | ✗ | ✗ | **✓** |
+| IPW / DR / Overlap | ✓ | ✓ | ✓ | **✓** |
 | Meta-learners | ✓ | ✓ | ✓ | **✓** |
+| CATE estimation | ✓ | ✓ | ✓ | **✓** |
+| >90% test coverage | varies | varies | varies | **✓** |
 
 ## Documentation
 
-Full documentation at [docs.onlinecml.org](https://docs.onlinecml.org).
+Full documentation and example notebooks at [athammad.github.io/onlinecml](https://athammad.github.io/onlinecml/).
 
 ## Contributing
 
@@ -81,8 +99,9 @@ must maintain >90% coverage.
 ```bibtex
 @software{onlinecml2025,
   title  = {OnlineCML: Online Causal Machine Learning in Python},
+  author = {Hammad, Ahmed},
   year   = {2025},
-  url    = {https://onlinecml.org}
+  url    = {https://github.com/athammad/onlinecml}
 }
 ```
 
