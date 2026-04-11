@@ -2,7 +2,6 @@
 
 > Causal inference for the real world — one observation at a time.
 
-[![Tests](https://github.com/athammad/onlinecml/actions/workflows/ci.yml/badge.svg)](https://github.com/athammad/onlinecml/actions)
 [![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)](https://github.com/athammad/onlinecml)
 [![Docs](https://img.shields.io/badge/docs-athammad.github.io%2Fonlinecml-blue)](https://athammad.github.io/onlinecml/)
 
@@ -83,7 +82,6 @@ search, and per-tree ADWIN drift detection.
 | IPW / DR / Overlap | ✓ | ✓ | ✓ | **✓** |
 | Meta-learners | ✓ | ✓ | ✓ | **✓** |
 | CATE estimation | ✓ | ✓ | ✓ | **✓** |
-| >90% test coverage | varies | varies | varies | **✓** |
 
 ## Documentation
 
