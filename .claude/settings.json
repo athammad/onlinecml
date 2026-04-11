@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ':*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/)",
+      "Bash(python -c ':*)",
+      "Bash(find /home/lucifer/pCloudDrive/onlinecml -name \"*.ipynb\" -type f -exec grep -l \"forest\\\\|tree\" {} \\\\;)",
+      "Bash(grep -n \"warmup\\\\|window\\\\|forgetting\\\\|decay\\\\|reset\" /home/lucifer/pCloudDrive/onlinecml/onlinecml/reweighting/*.py)",
+      "Bash(pytest tests/ -x -q)",
+      "Bash(python -c \"import shutil; shutil.copy\\('examples/notebooks/12_causal_tree_forest.ipynb', 'docs/examples/12_causal_tree_forest.ipynb'\\); print\\('copied'\\)\")",
+      "Bash(ls -la docs/examples/*.ipynb)",
+      "Read(//home/lucifer/pCloudDrive/onlinecml/**)",
+      "Bash(ls -la examples/notebooks/*.ipynb)",
+      "Bash(python full_test.py)",
+      "Bash(pytest tests/unit/test_forests.py -x -q)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}
