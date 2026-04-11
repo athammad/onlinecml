@@ -175,8 +175,6 @@ class OnlineCausalForest(BaseOnlineEstimator):
                         self._drift_detectors[i]  = ADWIN()
                         self._pred_stats[i]       = RunningStats()  # type: ignore[index]
 
-        self._ate_stats.update(self.predict_one(x))
-
     def predict_one(self, x: dict) -> float:
         """Predict CATE as the mean across all tree predictions.
 
@@ -192,6 +190,42 @@ class OnlineCausalForest(BaseOnlineEstimator):
         """
         preds = [t.predict_one(x) for t in self._trees]
         return sum(preds) / len(preds) if preds else 0.0
+
+    def predict_ate(self) -> float:
+        """Return the current ATE estimate as the mean of tree DR-corrected ATEs.
+
+        Each tree maintains a running mean of its own DR pseudo-outcomes.
+        The forest ATE is their simple average, which converges to the true
+        ATE without cold-start bias from untrained linear leaf models.
+
+        Returns
+        -------
+        float
+            Mean ATE across all trees. Returns ``0.0`` before any data.
+        """
+        ates = [t.predict_ate() for t in self._trees]
+        return sum(ates) / len(ates) if ates else 0.0
+
+    def predict_ci(self, alpha: float = 0.05) -> tuple[float, float]:
+        """Return a confidence interval for the ATE as the mean of tree CIs.
+
+        Parameters
+        ----------
+        alpha : float
+            Significance level. Default 0.05 gives a 95% CI.
+
+        Returns
+        -------
+        lower : float
+            Mean lower bound across all tree CIs.
+        upper : float
+            Mean upper bound across all tree CIs.
+        """
+        cis = [t.predict_ci(alpha) for t in self._trees]
+        lowers = [lo for lo, _ in cis]
+        uppers = [hi for _, hi in cis]
+        n = len(cis)
+        return (sum(lowers) / n, sum(uppers) / n) if n else (float("-inf"), float("inf"))
 
     # ------------------------------------------------------------------
     # Properties
