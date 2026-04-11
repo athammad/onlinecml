@@ -9,7 +9,7 @@ from onlinecml.base.running_stats import RunningStats
 
 
 class _LeafStats:
-    """Per-leaf statistics for both treatment arms."""
+    """Per-leaf outcome statistics for both treatment arms."""
 
     __slots__ = ("treated", "control")
 
@@ -18,7 +18,7 @@ class _LeafStats:
         self.control = RunningStats()
 
     def update(self, outcome: float, treatment: int) -> None:
-        """Route one observation to the appropriate arm."""
+        """Route one outcome to the appropriate arm."""
         if treatment == 1:
             self.treated.update(outcome)
         else:
@@ -33,6 +33,52 @@ class _LeafStats:
     def n(self) -> int:
         """Total observations in this leaf."""
         return self.treated.n + self.control.n
+
+
+class _FeatureSplitStats:
+    """Online sufficient statistics for one candidate split on a single feature.
+
+    Tracks two sets of outcome statistics (one per child) by routing each
+    incoming observation to the left child if ``x_j <= threshold`` and to
+    the right child otherwise. The threshold is the running mean of the
+    feature values seen so far — an unbiased estimate of the median for
+    symmetric distributions.
+
+    Note: because the threshold (mean) shifts as data arrives, early
+    observations may be re-classified in hindsight. This is an approximation
+    that works well in practice for the Hoeffding split criterion.
+    """
+
+    __slots__ = ("feat_stats", "left", "right")
+
+    def __init__(self) -> None:
+        self.feat_stats = RunningStats()  # tracks x_j values for threshold estimation
+        self.left  = _LeafStats()         # outcomes for x_j <= threshold
+        self.right = _LeafStats()         # outcomes for x_j >  threshold
+
+    def update(self, feat_val: float, outcome: float, treatment: int) -> None:
+        """Route one observation and update the appropriate child's outcome stats.
+
+        Parameters
+        ----------
+        feat_val : float
+            The value of this feature for the current observation.
+        outcome : float
+            Observed outcome.
+        treatment : int
+            Treatment indicator (0 or 1).
+        """
+        threshold = self.feat_stats.mean   # threshold = current running mean
+        self.feat_stats.update(feat_val)   # update threshold estimate after routing
+        if feat_val <= threshold:
+            self.left.update(outcome, treatment)
+        else:
+            self.right.update(outcome, treatment)
+
+    @property
+    def threshold(self) -> float:
+        """Current split threshold (running mean of the feature values)."""
+        return self.feat_stats.mean
 
 
 class _Node:
@@ -65,14 +111,16 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
     probability from the same feature as a batch learner would choose,
     given enough data.
 
-    **Novel causal split criterion:**  instead of minimising prediction
-    error on ``Y``, each candidate split is scored by the reduction in
-    **within-split CATE variance** — the weighted sum of
-    ``Var(CATE | X in left) + Var(CATE | X in right)``, estimated from the
-    running arm-level statistics maintained at every candidate split.  A
-    split is triggered when the Hoeffding bound guarantees (with
-    probability ``1 - delta``) that the best split is at least ``tau``
-    better than the second-best.
+    **Novel causal split criterion:** instead of minimising prediction
+    error on ``Y``, each candidate split is scored by the between-child
+    **CATE variance** — how much the two children differ in their
+    estimated treatment effects. A split is triggered when the Hoeffding
+    bound guarantees (with probability ``1 - delta``) that the best
+    feature is at least ``tau`` better than the second-best.
+
+    For each leaf and each feature ``j``, outcome statistics are maintained
+    separately for the two children defined by splitting at the running
+    mean of ``x_j``. This requires ``O(depth × features)`` memory.
 
     Parameters
     ----------
@@ -80,18 +128,21 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         Minimum number of observations a leaf must collect before
         attempting a split. Default 200.
     delta : float
-        Confidence parameter for the Hoeffding bound. Default 1e-5.
+        Confidence parameter for the Hoeffding bound. Smaller values
+        require a larger difference between best and second-best split
+        before committing. Default 1e-5.
     tau : float
         Tie-breaking threshold: do not split if the best and second-best
         splits are within ``tau`` of each other. Default 0.05.
     max_depth : int or None
         Maximum tree depth. ``None`` = unlimited. Default 10.
-    n_split_candidates : int
-        Number of candidate thresholds evaluated per feature at each
-        potential split. Default 10.
     min_arm_samples : int
-        Minimum observations per treatment arm required in a leaf before
-        its CATE estimate is used in the split score. Default 5.
+        Minimum observations per treatment arm required in each child
+        before its CATE estimate is used in the split score. Default 5.
+    outcome_range : float
+        Upper bound on the absolute value of the split score. Used to
+        calibrate the Hoeffding bound. Set to approximately
+        ``max(|CATE|)`` for your problem. Default 10.0.
 
     Notes
     -----
@@ -99,15 +150,16 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
 
     .. math::
 
-        \\text{score} = -\\left(
-            \\frac{n_L}{n} \\hat{\\sigma}^2_{\\tau,L} +
-            \\frac{n_R}{n} \\hat{\\sigma}^2_{\\tau,R}
-        \\right)
+        \\text{score}(j) = \\frac{n_L}{n}(\\hat{\\tau}_L - \\hat{\\tau})^2
+                         + \\frac{n_R}{n}(\\hat{\\tau}_R - \\hat{\\tau})^2
 
-    where :math:`\\hat{\\sigma}^2_{\\tau,k}` is the empirical variance of the
-    running arm-level CATE estimates within child ``k``.  Because arm-level
-    outcomes are tracked with Welford running statistics, the tree maintains
-    ``O(depth × features)`` memory.
+    where :math:`\\hat{\\tau}_k = \\bar{Y}_{1,k} - \\bar{Y}_{0,k}` is the
+    mean-difference CATE estimate in child ``k``, and :math:`\\hat{\\tau}` is
+    the overall leaf CATE. This score is **maximised** — we want children
+    whose CATEs differ as much as possible from the leaf average.
+
+    The split threshold for feature ``j`` is its running mean (an online
+    approximation to the median). This uses ``O(d)`` memory per leaf.
 
     References
     ----------
@@ -115,17 +167,16 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
     Proceedings of KDD, 71-80.
 
     Wager, S. and Athey, S. (2018). Estimation and inference of heterogeneous
-    treatment effects using random forests. Journal of the American
-    Statistical Association, 113(523), 1228-1242.
+    treatment effects using random forests. JASA, 113(523), 1228-1242.
 
     Examples
     --------
-    >>> from onlinecml.datasets import LinearCausalStream
+    >>> from onlinecml.datasets import HeterogeneousCausalStream
     >>> from onlinecml.forests import CausalHoeffdingTree
-    >>> tree = CausalHoeffdingTree(grace_period=50, seed=42)
-    >>> for x, w, y, _ in LinearCausalStream(n=500, seed=0):
+    >>> tree = CausalHoeffdingTree(grace_period=50, delta=0.01, seed=42)
+    >>> for x, w, y, _ in HeterogeneousCausalStream(n=1000, seed=0):
     ...     tree.learn_one(x, w, y)
-    >>> isinstance(tree.predict_one({'x0': 0.5, 'x1': -0.3, 'x2': 0.0, 'x3': 0.1, 'x4': -0.2}), float)
+    >>> isinstance(tree.predict_one({'x0': 1.0, 'x1': 0.0, 'x2': 0.0, 'x3': 0.0, 'x4': 0.0}), float)
     True
     """
 
@@ -135,26 +186,24 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         delta: float = 1e-5,
         tau: float = 0.05,
         max_depth: int | None = 10,
-        n_split_candidates: int = 10,
         min_arm_samples: int = 5,
+        outcome_range: float = 10.0,
         seed: int | None = None,
     ) -> None:
-        self.grace_period       = grace_period
-        self.delta              = delta
-        self.tau                = tau
-        self.max_depth          = max_depth
-        self.n_split_candidates = n_split_candidates
-        self.min_arm_samples    = min_arm_samples
-        self.seed               = seed
+        self.grace_period    = grace_period
+        self.delta           = delta
+        self.tau             = tau
+        self.max_depth       = max_depth
+        self.min_arm_samples = min_arm_samples
+        self.outcome_range   = outcome_range
+        self.seed            = seed
 
         self._root: _Node = _Node()
         self._n_seen: int = 0
         self._ate_stats: RunningStats = RunningStats()
 
-        # Per-leaf feature statistics: {node_id → {feat → {arm → [values]}}}
-        # We use a simpler approach: store per-leaf per-feature running stats
-        # for both arms.  Keyed by id(node).
-        self._leaf_feat_stats: dict[int, dict[str, _LeafStats]] = {}
+        # Per-leaf per-feature split statistics: {id(node) → {feat → _FeatureSplitStats}}
+        self._leaf_split_stats: dict[int, dict[str, _FeatureSplitStats]] = {}
 
     # ------------------------------------------------------------------
     # BaseOnlineEstimator interface
@@ -183,27 +232,26 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         self._n_seen += 1
         node, depth = self._route(x)
 
-        # Update leaf stats
+        # Update leaf outcome stats
         node.stats.update(outcome, treatment)
         node.n_since_split += 1
 
-        # Update per-feature stats for this leaf
+        # Update per-feature split statistics for this leaf
         leaf_id = id(node)
-        if leaf_id not in self._leaf_feat_stats:
-            self._leaf_feat_stats[leaf_id] = {}
+        if leaf_id not in self._leaf_split_stats:
+            self._leaf_split_stats[leaf_id] = {}
         for feat, val in x.items():
-            if feat not in self._leaf_feat_stats[leaf_id]:
-                self._leaf_feat_stats[leaf_id][feat] = _LeafStats()
-            self._leaf_feat_stats[leaf_id][feat].update(val, treatment)
+            if feat not in self._leaf_split_stats[leaf_id]:
+                self._leaf_split_stats[leaf_id][feat] = _FeatureSplitStats()
+            self._leaf_split_stats[leaf_id][feat].update(val, outcome, treatment)
 
-        # Update global ATE
-        cate_est = node.stats.cate
-        self._ate_stats.update(cate_est)
+        # Update global ATE estimate
+        self._ate_stats.update(node.stats.cate)
 
         # Attempt split
         if node.n_since_split >= self.grace_period:
             if self.max_depth is None or depth < self.max_depth:
-                self._try_split(node, x, depth)
+                self._try_split(node, depth)
 
     def predict_one(self, x: dict) -> float:
         """Predict CATE for a single unit by routing to the appropriate leaf.
@@ -235,103 +283,89 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
             depth += 1
         return node, depth
 
-    def _try_split(self, node: _Node, x: dict, depth: int) -> None:
-        """Evaluate causal split candidates and split if the Hoeffding bound allows."""
+    def _split_score(self, node: _Node, feat: str) -> float:
+        """Compute the causal split score for ``feat`` at its running-mean threshold.
+
+        Returns the weighted between-child CATE variance (higher = better split).
+        Returns ``-inf`` if there is insufficient data to estimate either child's CATE.
+
+        Parameters
+        ----------
+        node : _Node
+            The leaf node to evaluate.
+        feat : str
+            Feature name to evaluate as a split candidate.
+
+        Returns
+        -------
+        float
+            Weighted CATE variance between the two children.
+        """
         leaf_id = id(node)
-        feat_stats = self._leaf_feat_stats.get(leaf_id, {})
+        split_data = self._leaf_split_stats.get(leaf_id, {}).get(feat)
+        if split_data is None:
+            return float("-inf")
+
+        left  = split_data.left
+        right = split_data.right
+
+        # Require enough per-arm data in both children
+        if (left.treated.n  < self.min_arm_samples or
+                left.control.n  < self.min_arm_samples or
+                right.treated.n < self.min_arm_samples or
+                right.control.n < self.min_arm_samples):
+            return float("-inf")
+
+        n_left  = left.n
+        n_right = right.n
+        n_total = n_left + n_right
+        if n_total == 0:
+            return float("-inf")
+
+        cate_global = node.stats.cate
+        cate_left   = left.cate
+        cate_right  = right.cate
+
+        # Weighted between-child CATE variance: maximise this
+        score = (
+            (n_left  / n_total) * (cate_left  - cate_global) ** 2 +
+            (n_right / n_total) * (cate_right - cate_global) ** 2
+        )
+        return score
+
+    def _try_split(self, node: _Node, depth: int) -> None:
+        """Evaluate causal split candidates and split if the Hoeffding bound allows."""
+        leaf_id    = id(node)
+        feat_stats = self._leaf_split_stats.get(leaf_id, {})
         if not feat_stats:
             return
 
         n = node.n_since_split
         best_score   = float("-inf")
         best_feat    = None
-        best_thresh  = None
         second_score = float("-inf")
 
-        for feat, fs in feat_stats.items():
-            # Collect observed values to define candidate thresholds
-            # Use the running mean ± std as a proxy for the range
-            all_stats = fs.treated if fs.treated.n >= 1 else fs.control
-            if all_stats.n < 2:
-                continue
-            mu  = all_stats.mean
-            std = all_stats.std if all_stats.n >= 2 else 1.0
-            thresholds = [mu + std * t for t in
-                          [-1.5, -1.0, -0.5, -0.2, 0.0,
-                            0.2,  0.5,  1.0,  1.5,  2.0]]
+        for feat in feat_stats:
+            score = self._split_score(node, feat)
+            if score > best_score:
+                second_score = best_score
+                best_score   = score
+                best_feat    = feat
+            elif score > second_score:
+                second_score = score
 
-            for thresh in thresholds:
-                score = self._split_score(node, feat, thresh, x)
-                if score > best_score:
-                    second_score = best_score
-                    best_score   = score
-                    best_feat    = feat
-                    best_thresh  = thresh
-                elif score > second_score:
-                    second_score = score
-
-        if best_feat is None:
+        if best_feat is None or best_score <= 0:
             return
 
-        # Hoeffding bound: R = range of score (CATE variance ≤ (max_outcome)^2)
-        # We normalise by assuming outcomes lie in [-10, 10] → R = 100
-        R = 100.0
+        # Hoeffding bound: R = outcome_range (max |CATE| estimate)
+        # Score is a CATE variance, bounded by outcome_range^2
+        R = self.outcome_range
         hoeffding_bound = math.sqrt(R * R * math.log(1.0 / self.delta) / (2.0 * n))
 
-        if best_score - second_score > hoeffding_bound or hoeffding_bound < self.tau:
-            self._split_node(node, best_feat, best_thresh, leaf_id)
-
-    def _split_score(
-        self,
-        node: _Node,
-        feature: str,
-        threshold: float,
-        x: dict,
-    ) -> float:
-        """Score a candidate split by reduction in within-child CATE variance.
-
-        Returns the negative weighted CATE variance (higher = better split).
-        """
-        leaf_id   = id(node)
-        feat_stat = self._leaf_feat_stats.get(leaf_id, {}).get(feature)
-        if feat_stat is None:
-            return float("-inf")
-
-        # Approximate child membership via arm-level feature stats
-        # Left: feature ≤ threshold, right: feature > threshold
-        # We use a simple fraction based on normal CDF approximation.
-        fs_t = feat_stat.treated
-        fs_c = feat_stat.control
-
-        if fs_t.n < self.min_arm_samples or fs_c.n < self.min_arm_samples:
-            return float("-inf")
-
-        def _normal_cdf(val: float, mu: float, sigma: float) -> float:
-            if sigma <= 0:
-                return 1.0 if mu <= val else 0.0
-            return 0.5 * (1.0 + math.erf((val - mu) / (sigma * math.sqrt(2.0))))
-
-        p_left_t = _normal_cdf(threshold, fs_t.mean, max(fs_t.std, 1e-6))
-        p_left_c = _normal_cdf(threshold, fs_c.mean, max(fs_c.std, 1e-6))
-
-        n_total = node.stats.n
-        if n_total == 0:
-            return float("-inf")
-
-        # Estimated child sizes
-        n_left  = max(1, round(p_left_t  * fs_t.n + p_left_c  * fs_c.n))
-        n_right = max(1, n_total - n_left)
-
-        # CATE variance proxy: use (CATE_left - CATE_global)^2 + (CATE_right - CATE_global)^2
-        cate_global = node.stats.cate
-        cate_left   = (fs_t.mean * p_left_t  - fs_c.mean * p_left_c )
-        cate_right  = (fs_t.mean * (1 - p_left_t) - fs_c.mean * (1 - p_left_c))
-
-        weighted_var = (
-            (n_left  / n_total) * (cate_left  - cate_global) ** 2 +
-            (n_right / n_total) * (cate_right - cate_global) ** 2
-        )
-        return weighted_var  # maximise CATE variance between children
+        gap = best_score - max(second_score, 0.0)
+        if gap > hoeffding_bound or hoeffding_bound < self.tau:
+            thresh = feat_stats[best_feat].threshold
+            self._split_node(node, best_feat, thresh, leaf_id)
 
     def _split_node(
         self,
@@ -340,14 +374,13 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         threshold: float,
         leaf_id: int,
     ) -> None:
-        """Perform the split: convert the leaf into an internal node."""
+        """Convert a leaf into an internal node."""
         node.feature   = feature
         node.threshold = threshold
         node.left      = _Node()
         node.right     = _Node()
         node.n_since_split = 0
-        # Clean up leaf stats for the old leaf
-        self._leaf_feat_stats.pop(leaf_id, None)
+        self._leaf_split_stats.pop(leaf_id, None)
 
     # ------------------------------------------------------------------
     # Properties
