@@ -3,7 +3,7 @@
 from river.linear_model import LinearRegression, LogisticRegression
 
 from onlinecml.base.base_estimator import BaseOnlineEstimator
-from onlinecml.base.running_stats import RunningStats
+from onlinecml.base.running_stats import EWMAStats, RunningStats
 from onlinecml.propensity.propensity_score import OnlinePropensityScore
 
 
@@ -51,6 +51,16 @@ class OnlineAIPW(BaseOnlineEstimator):
     Unlike ``OnlineIPW``, ``predict_one(x)`` returns an individual CATE
     estimate: ``mu1(x) - mu0(x)``.
 
+    Parameters
+    ----------
+    warmup : int
+        Number of initial observations to skip when accumulating the ATE
+        estimate. All models still train during warmup. Default 0.
+    forgetting_factor : float
+        Controls how quickly old pseudo-outcomes are forgotten.
+        ``1.0`` = cumulative mean (no forgetting, default).
+        Values < 1.0 (e.g. 0.95–0.99) switch to EWMA for drift adaptation.
+
     Examples
     --------
     >>> from onlinecml.datasets import LinearCausalStream
@@ -68,6 +78,8 @@ class OnlineAIPW(BaseOnlineEstimator):
         control_model=None,
         clip_min: float = 0.01,
         clip_max: float = 0.99,
+        warmup: int = 0,
+        forgetting_factor: float = 1.0,
     ) -> None:
         self.ps_model = ps_model if ps_model is not None else OnlinePropensityScore(
             LogisticRegression(), clip_min=clip_min, clip_max=clip_max
@@ -76,9 +88,15 @@ class OnlineAIPW(BaseOnlineEstimator):
         self.control_model = control_model if control_model is not None else LinearRegression()
         self.clip_min = clip_min
         self.clip_max = clip_max
+        self.warmup = warmup
+        self.forgetting_factor = forgetting_factor
         # Non-constructor state
         self._n_seen: int = 0
-        self._ate_stats: RunningStats = RunningStats()
+        self._ate_stats: RunningStats | EWMAStats = (
+            EWMAStats(alpha=1.0 - forgetting_factor)
+            if forgetting_factor < 1.0
+            else RunningStats()
+        )
 
     def learn_one(
         self,
@@ -118,8 +136,9 @@ class OnlineAIPW(BaseOnlineEstimator):
             - (1 - treatment) * (outcome - mu0) / (1.0 - p)
         )
 
-        # Step 3: update ATE tracker
-        self._ate_stats.update(psi)
+        # Step 3: update ATE tracker (skip during warmup)
+        if self._n_seen >= self.warmup:
+            self._ate_stats.update(psi)
         self._n_seen += 1
 
         # Step 4: update all models AFTER pseudo-outcome

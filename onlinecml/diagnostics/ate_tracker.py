@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 import scipy.stats
 
+from onlinecml.base.running_stats import EWMAStats, RunningStats
+
 if TYPE_CHECKING:
     import matplotlib.axes
 
@@ -13,14 +15,21 @@ class ATETracker:
     """Tracks the running ATE estimate with online confidence intervals.
 
     Maintains a running mean and variance of per-observation pseudo-outcomes
-    using Welford's algorithm, and optionally records history for convergence
-    plotting.
+    and optionally records history for convergence plotting.
 
     Parameters
     ----------
     log_every : int
         Append a history entry every ``log_every`` observations. Default 1
         (log every observation). Set to a larger value for long streams.
+    warmup : int
+        Number of initial pseudo-outcomes to skip when accumulating the ATE
+        estimate. History is not recorded during warmup. Default 0.
+    forgetting_factor : float
+        Controls how quickly old pseudo-outcomes are forgotten.
+        ``1.0`` = cumulative Welford mean (no forgetting, default).
+        Values < 1.0 (e.g. 0.95–0.99) switch to EWMA so the tracker
+        adapts to concept drift. ``alpha = 1 - forgetting_factor``.
 
     Notes
     -----
@@ -28,9 +37,9 @@ class ATETracker:
     that users instantiate separately and feed pseudo-outcomes into. It is
     not tied to any specific estimation method.
 
-    ``ATETracker`` internal Welford state is NOT part of the constructor,
-    so it is not preserved by ``clone()``. This is intentional — the tracker
-    is always created fresh.
+    When ``forgetting_factor < 1.0``, the internal Welford state is replaced
+    by an EWMA (``EWMAStats``). The CI formula remains ``mean ± z * sqrt(var/n)``
+    where ``var`` and ``n`` come from the EWMA estimates.
 
     Examples
     --------
@@ -41,12 +50,22 @@ class ATETracker:
     True
     """
 
-    def __init__(self, log_every: int = 1) -> None:
+    def __init__(
+        self,
+        log_every: int = 1,
+        warmup: int = 0,
+        forgetting_factor: float = 1.0,
+    ) -> None:
         self.log_every = log_every
-        # Welford state — not constructor params (intentionally not cloned)
-        self._n: int = 0
-        self._mean: float = 0.0
-        self._M2: float = 0.0
+        self.warmup = warmup
+        self.forgetting_factor = forgetting_factor
+        # Delegate statistics to the appropriate backend
+        self._stats: RunningStats | EWMAStats = (
+            EWMAStats(alpha=1.0 - forgetting_factor)
+            if forgetting_factor < 1.0
+            else RunningStats()
+        )
+        self._n_total: int = 0  # includes warmup observations
         self._history: list[tuple[int, float, float, float]] = []
 
     def update(self, pseudo_outcome: float) -> None:
@@ -59,35 +78,34 @@ class ATETracker:
             per-obs CATE estimate). The running mean of these values
             converges to the ATE under the relevant identification assumptions.
         """
-        self._n += 1
-        delta = pseudo_outcome - self._mean
-        self._mean += delta / self._n
-        delta2 = pseudo_outcome - self._mean
-        self._M2 += delta * delta2
+        self._n_total += 1
+        if self._n_total <= self.warmup:
+            return
 
-        if self._n % self.log_every == 0:
+        self._stats.update(pseudo_outcome)
+
+        if self._stats.n % self.log_every == 0:
             lo, hi = self.ci()
-            self._history.append((self._n, self._mean, lo, hi))
+            self._history.append((self._n_total, self._stats.mean, lo, hi))
 
     def reset(self) -> None:
         """Reset all state to the initial (empty) condition."""
-        self._n = 0
-        self._mean = 0.0
-        self._M2 = 0.0
+        self._stats.reset()
+        self._n_total = 0
         self._history = []
 
     @property
     def ate(self) -> float:
         """Current ATE estimate (running mean of pseudo-outcomes).
 
-        Returns 0.0 before any observations are seen.
+        Returns 0.0 before any observations are seen (or during warmup).
         """
-        return self._mean
+        return self._stats.mean
 
     @property
     def n(self) -> int:
-        """Number of pseudo-outcomes processed."""
-        return self._n
+        """Number of pseudo-outcomes processed (excluding warmup)."""
+        return self._stats.n
 
     @property
     def history(self) -> list[tuple[int, float, float, float]]:
@@ -115,12 +133,14 @@ class ATETracker:
         -----
         Returns ``(-inf, inf)`` before at least 2 observations are seen.
         """
-        if self._n < 2:
+        n = self._stats.n
+        if n < 2:
             return (float("-inf"), float("inf"))
-        variance = self._M2 / (self._n - 1)
-        se = math.sqrt(variance / self._n)
+        variance = self._stats.variance
+        se = math.sqrt(variance / n)
         z = scipy.stats.norm.ppf(1.0 - alpha / 2.0)
-        return (self._mean - z * se, self._mean + z * se)
+        mean = self._stats.mean
+        return (mean - z * se, mean + z * se)
 
     def convergence_width(self, alpha: float = 0.05) -> float:
         """Return the current confidence interval width.
@@ -170,7 +190,7 @@ class ATETracker:
 
         ax.plot(steps, ates, label="ATE estimate", color="steelblue")
         ax.fill_between(steps, lows, highs, alpha=0.2, color="steelblue", label="95% CI")
-        ax.axhline(self._mean, linestyle="--", color="gray", linewidth=0.8, label="Current ATE")
+        ax.axhline(self._stats.mean, linestyle="--", color="gray", linewidth=0.8, label="Current ATE")
         ax.set_xlabel("Observations")
         ax.set_ylabel("ATE estimate")
         ax.set_title("ATE Convergence")

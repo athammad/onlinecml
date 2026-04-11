@@ -1,4 +1,4 @@
-"""Online running statistics using Welford's and West's algorithms."""
+"""Online running statistics using Welford's, West's, and EWMA algorithms."""
 
 import math
 
@@ -142,4 +142,98 @@ class WeightedRunningStats:
     @property
     def std(self) -> float:
         """Population-weighted standard deviation. Returns 0.0 when sum_w <= 0."""
+        return math.sqrt(self.variance)
+
+
+class EWMAStats:
+    """Online mean and variance using Exponentially Weighted Moving Average (EWMA).
+
+    Provides the same interface as ``RunningStats`` so it can be used as a
+    drop-in replacement when observations should decay over time. Useful for
+    streaming settings with concept drift where old observations should count
+    less than recent ones.
+
+    Parameters
+    ----------
+    alpha : float
+        Smoothing factor in ``(0, 1)``. Higher values = faster forgetting
+        (recent observations dominate). Typical values: 0.01–0.10.
+        ``alpha = 1 - forgetting_factor``.
+
+    Notes
+    -----
+    The EWMA mean update is:
+
+    .. math::
+
+        \\mu_t = \\mu_{t-1} + \\alpha (x_t - \\mu_{t-1})
+
+    The EWMA variance update (Welford-style EWMA):
+
+    .. math::
+
+        \\sigma^2_t = (1 - \\alpha)(\\sigma^2_{t-1} + \\alpha (x_t - \\mu_{t-1})^2)
+
+    ``variance`` and ``n`` follow the same API as ``RunningStats`` so
+    ``BaseOnlineEstimator.predict_ci()`` works unchanged.
+
+    Examples
+    --------
+    >>> stats = EWMAStats(alpha=0.1)
+    >>> for x in [1.0, 2.0, 3.0, 4.0, 5.0]:
+    ...     stats.update(x)
+    >>> 3.0 < stats.mean < 5.0  # weighted toward recent obs
+    True
+    """
+
+    def __init__(self, alpha: float) -> None:
+        if not 0.0 < alpha < 1.0:
+            raise ValueError(f"alpha must be in (0, 1), got {alpha}")
+        self.alpha = alpha
+        self._n: int = 0
+        self._mean: float = 0.0
+        self._var: float = 0.0
+
+    def update(self, x: float) -> None:
+        """Incorporate one observation into the running EWMA statistics.
+
+        Parameters
+        ----------
+        x : float
+            The new scalar value to incorporate.
+        """
+        self._n += 1
+        if self._n == 1:
+            self._mean = x
+        else:
+            diff = x - self._mean
+            self._mean += self.alpha * diff
+            self._var = (1.0 - self.alpha) * (self._var + self.alpha * diff ** 2)
+
+    def reset(self) -> None:
+        """Reset all state to the initial (empty) condition."""
+        self._n = 0
+        self._mean = 0.0
+        self._var = 0.0
+
+    @property
+    def n(self) -> int:
+        """Number of observations seen."""
+        return self._n
+
+    @property
+    def mean(self) -> float:
+        """Current EWMA mean. Returns 0.0 before any observations."""
+        return self._mean
+
+    @property
+    def variance(self) -> float:
+        """Current EWMA variance. Returns 0.0 when n < 2."""
+        if self._n < 2:
+            return 0.0
+        return self._var
+
+    @property
+    def std(self) -> float:
+        """Current EWMA standard deviation. Returns 0.0 when n < 2."""
         return math.sqrt(self.variance)

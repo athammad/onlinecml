@@ -73,6 +73,7 @@ nav:
     - Marketing Case Study: examples/09_marketing_case_study.ipynb
     - Clinical Trial: examples/10_clinical_trial.ipynb
     - Online vs Batch: examples/11_vs_econml_batch.ipynb
+    - Causal Trees & Forests: examples/12_causal_tree_forest.ipynb
   - Contributing:
     - How to Contribute: contributing/contributing.md
     - Adding an Estimator: contributing/adding_estimator.md
