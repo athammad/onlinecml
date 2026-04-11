@@ -3,13 +3,25 @@
 from __future__ import annotations
 
 import math
+import random
+
+from river.linear_model import LinearRegression, LogisticRegression
 
 from onlinecml.base.base_estimator import BaseOnlineEstimator
 from onlinecml.base.running_stats import RunningStats
 
+# Precomputed z-scores for normal quantiles [0.10, 0.25, 0.50, 0.75, 0.90].
+# Used to define candidate split thresholds from the running Gaussian of each feature.
+# scipy.stats.norm.ppf([0.10, 0.25, 0.50, 0.75, 0.90])
+_QUANTILE_ZSCORES: tuple[float, ...] = (-1.2816, -0.6745, 0.0, 0.6745, 1.2816)
+
 
 class _LeafStats:
-    """Per-leaf outcome statistics for both treatment arms."""
+    """Per-child arm-wise outcome statistics for split-candidate scoring.
+
+    Used exclusively inside ``_FeatureSplitStats`` to evaluate the causal
+    split criterion.  Actual leaf predictions use the node's linear models.
+    """
 
     __slots__ = ("treated", "control")
 
@@ -26,67 +38,131 @@ class _LeafStats:
 
     @property
     def cate(self) -> float:
-        """Current mean-difference CATE estimate for this leaf."""
+        """Mean-difference CATE estimate for this child."""
         return self.treated.mean - self.control.mean
 
     @property
     def n(self) -> int:
-        """Total observations in this leaf."""
+        """Total observations in both arms."""
         return self.treated.n + self.control.n
 
 
 class _FeatureSplitStats:
-    """Online sufficient statistics for one candidate split on a single feature.
+    """Multi-threshold split statistics for one feature.
 
-    Tracks two sets of outcome statistics (one per child) by routing each
-    incoming observation to the left child if ``x_j <= threshold`` and to
-    the right child otherwise. The threshold is the running mean of the
-    feature values seen so far — an unbiased estimate of the median for
-    symmetric distributions.
+    Maintains ``len(_QUANTILE_ZSCORES)`` candidate split points, each defined
+    by a z-score applied to the running Gaussian of the feature values.  Every
+    incoming observation is routed to all candidates simultaneously, so each
+    candidate independently accumulates left/right outcome stats.
 
-    Note: because the threshold (mean) shifts as data arrives, early
-    observations may be re-classified in hindsight. This is an approximation
-    that works well in practice for the Hoeffding split criterion.
+    The best (threshold, score) pair is returned by ``best_split()`` at
+    split-evaluation time.
+
+    Notes
+    -----
+    All candidates receive every observation — no subsampling — so memory is
+    ``O(len(_QUANTILE_ZSCORES))`` times the single-threshold cost.  With 5
+    quantiles this is a 5× factor per leaf per feature.
     """
 
-    __slots__ = ("feat_stats", "left", "right")
+    __slots__ = ("feat_stats", "candidates")
 
     def __init__(self) -> None:
-        self.feat_stats = RunningStats()  # tracks x_j values for threshold estimation
-        self.left  = _LeafStats()         # outcomes for x_j <= threshold
-        self.right = _LeafStats()         # outcomes for x_j >  threshold
+        self.feat_stats = RunningStats()
+        self.candidates: list[tuple[_LeafStats, _LeafStats]] = [
+            (_LeafStats(), _LeafStats()) for _ in _QUANTILE_ZSCORES
+        ]
 
     def update(self, feat_val: float, outcome: float, treatment: int) -> None:
-        """Route one observation and update the appropriate child's outcome stats.
+        """Route one observation to all candidate children.
 
         Parameters
         ----------
         feat_val : float
-            The value of this feature for the current observation.
+            Feature value for this observation.
         outcome : float
             Observed outcome.
         treatment : int
             Treatment indicator (0 or 1).
         """
-        threshold = self.feat_stats.mean   # threshold = current running mean
-        self.feat_stats.update(feat_val)   # update threshold estimate after routing
-        if feat_val <= threshold:
-            self.left.update(outcome, treatment)
-        else:
-            self.right.update(outcome, treatment)
+        mu  = self.feat_stats.mean
+        std = self.feat_stats.std if self.feat_stats.n >= 2 else 1.0
+        self.feat_stats.update(feat_val)
+        for (left, right), z in zip(self.candidates, _QUANTILE_ZSCORES):
+            thresh = mu + std * z
+            if feat_val <= thresh:
+                left.update(outcome, treatment)
+            else:
+                right.update(outcome, treatment)
 
-    @property
-    def threshold(self) -> float:
-        """Current split threshold (running mean of the feature values)."""
-        return self.feat_stats.mean
+    def best_split(
+        self,
+        cate_global: float,
+        min_arm_samples: int,
+    ) -> tuple[float, float]:
+        """Find the best candidate threshold and its CATE-variance split score.
+
+        Parameters
+        ----------
+        cate_global : float
+            Current leaf CATE (baseline for the between-child variance score).
+        min_arm_samples : int
+            Minimum per-arm observations required in each child to score a
+            candidate.
+
+        Returns
+        -------
+        score : float
+            Best weighted between-child CATE variance. ``-inf`` if no candidate
+            has sufficient per-arm data.
+        threshold : float
+            Feature threshold corresponding to the best score.
+        """
+        mu  = self.feat_stats.mean
+        std = self.feat_stats.std if self.feat_stats.n >= 2 else 1.0
+
+        best_score  = float("-inf")
+        best_thresh = mu  # default: median (z=0)
+
+        for (left, right), z in zip(self.candidates, _QUANTILE_ZSCORES):
+            if (left.treated.n  < min_arm_samples or
+                    left.control.n  < min_arm_samples or
+                    right.treated.n < min_arm_samples or
+                    right.control.n < min_arm_samples):
+                continue
+
+            n_left  = left.n
+            n_right = right.n
+            n_total = n_left + n_right
+            if n_total == 0:
+                continue
+
+            score = (
+                (n_left  / n_total) * (left.cate  - cate_global) ** 2 +
+                (n_right / n_total) * (right.cate - cate_global) ** 2
+            )
+            if score > best_score:
+                best_score  = score
+                best_thresh = mu + std * z
+
+        return best_score, best_thresh
 
 
 class _Node:
-    """Internal node or leaf in the CausalHoeffdingTree."""
+    """Internal node or leaf in the CausalHoeffdingTree.
+
+    Leaf nodes maintain three online models for doubly robust CATE estimation:
+    a treated outcome model ``mu1``, a control outcome model ``mu0``, and a
+    propensity score model ``ps``.  Predictions use ``mu1(x) - mu0(x)``
+    (individual CATE) rather than the raw arm means.  The DR-corrected running
+    ATE is stored in ``dr_stats`` and used as the global-leaf CATE baseline for
+    split scoring.
+    """
 
     __slots__ = (
         "feature", "threshold", "left", "right",
         "stats", "n_since_split",
+        "treated_model", "control_model", "ps_model", "dr_stats",
     )
 
     def __init__(self) -> None:
@@ -94,13 +170,43 @@ class _Node:
         self.threshold: float | None = None
         self.left: "_Node | None" = None
         self.right: "_Node | None" = None
-        self.stats: _LeafStats = _LeafStats()
+        self.stats: _LeafStats = _LeafStats()        # arm counts + raw mean-diff
         self.n_since_split: int = 0
+        self.treated_model: LinearRegression = LinearRegression()
+        self.control_model: LinearRegression = LinearRegression()
+        self.ps_model: LogisticRegression    = LogisticRegression()
+        self.dr_stats: RunningStats          = RunningStats()
 
     @property
     def is_leaf(self) -> bool:
         """True when this node has no children."""
         return self.left is None
+
+    def predict_cate(self, x: dict, min_arm_samples: int) -> float:
+        """Predict CATE using the leaf's linear models when enough data exists.
+
+        Falls back to the DR-corrected running mean, then to raw
+        mean-difference, when models are undertrained.
+
+        Parameters
+        ----------
+        x : dict
+            Covariate dictionary for the query point.
+        min_arm_samples : int
+            Minimum per-arm observations before using the linear models.
+
+        Returns
+        -------
+        float
+            CATE estimate for ``x``.
+        """
+        if (self.stats.treated.n >= min_arm_samples and
+                self.stats.control.n >= min_arm_samples):
+            return (self.treated_model.predict_one(x)
+                    - self.control_model.predict_one(x))
+        if self.dr_stats.n >= 2:
+            return self.dr_stats.mean
+        return self.stats.cate
 
 
 class CausalHoeffdingTree(BaseOnlineEstimator):
@@ -111,60 +217,62 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
     probability from the same feature as a batch learner would choose,
     given enough data.
 
-    **Novel causal split criterion:** instead of minimising prediction
-    error on ``Y``, each candidate split is scored by the between-child
-    **CATE variance** — how much the two children differ in their
-    estimated treatment effects. A split is triggered when the Hoeffding
-    bound guarantees (with probability ``1 - delta``) that the best
-    feature is at least ``tau`` better than the second-best.
+    **Improvements over a naive causal tree:**
 
-    For each leaf and each feature ``j``, outcome statistics are maintained
-    separately for the two children defined by splitting at the running
-    mean of ``x_j``. This requires ``O(depth × features)`` memory.
+    - *Multi-threshold split search*: instead of a single running-mean
+      threshold, evaluates 5 quantile-based candidates per feature and picks
+      the best, improving split location accuracy.
+    - *Linear leaf models*: each leaf maintains separate River
+      ``LinearRegression`` models for the treated and control arms.
+      ``predict_one`` returns ``mu1(x) - mu0(x)`` (individual CATE) rather
+      than a flat leaf mean.
+    - *Doubly robust leaf CATE*: the per-leaf ATE baseline used for split
+      scoring is the running mean of the DR pseudo-outcome
+      ``mu1 - mu0 + W(Y-mu1)/p - (1-W)(Y-mu0)/(1-p)``, correcting for
+      within-leaf confounding.
 
     Parameters
     ----------
     grace_period : int
-        Minimum number of observations a leaf must collect before
-        attempting a split. Default 200.
+        Minimum observations a leaf must collect before attempting a split.
+        Default 200.
     delta : float
-        Confidence parameter for the Hoeffding bound. Smaller values
-        require a larger difference between best and second-best split
-        before committing. Default 1e-5.
+        Confidence parameter for the Hoeffding bound. Default 1e-5.
     tau : float
-        Tie-breaking threshold: do not split if the best and second-best
-        splits are within ``tau`` of each other. Default 0.05.
+        Tie-breaking threshold. Default 0.05.
     max_depth : int or None
         Maximum tree depth. ``None`` = unlimited. Default 10.
     min_arm_samples : int
-        Minimum observations per treatment arm required in each child
-        before its CATE estimate is used in the split score. Default 5.
+        Minimum per-arm observations required per child for split scoring and
+        for switching to linear-model predictions. Default 5.
+    mtry : int or None
+        Number of features randomly considered at each split attempt.
+        ``None`` = all features. Default None.
     outcome_range : float
-        Upper bound on the absolute value of the split score. Used to
-        calibrate the Hoeffding bound. Set to approximately
-        ``max(|CATE|)`` for your problem. Default 10.0.
+        Upper bound on ``|CATE|`` for calibrating the Hoeffding bound.
+        Default 10.0.
+    clip_ps : float
+        Propensity score clipping bounds ``[clip_ps, 1 - clip_ps]`` for DR
+        correction within leaves. Default 0.1.
+    seed : int or None
+        Random seed for the mtry RNG. Default None.
 
     Notes
     -----
-    The CATE-variance split score for a binary split ``(left, right)`` is:
+    Split score (maximised):
 
     .. math::
 
         \\text{score}(j) = \\frac{n_L}{n}(\\hat{\\tau}_L - \\hat{\\tau})^2
                          + \\frac{n_R}{n}(\\hat{\\tau}_R - \\hat{\\tau})^2
 
-    where :math:`\\hat{\\tau}_k = \\bar{Y}_{1,k} - \\bar{Y}_{0,k}` is the
-    mean-difference CATE estimate in child ``k``, and :math:`\\hat{\\tau}` is
-    the overall leaf CATE. This score is **maximised** — we want children
-    whose CATEs differ as much as possible from the leaf average.
-
-    The split threshold for feature ``j`` is its running mean (an online
-    approximation to the median). This uses ``O(d)`` memory per leaf.
+    where :math:`\\hat{\\tau}` is the DR-corrected leaf CATE and
+    :math:`\\hat{\\tau}_k = \\bar{Y}_{1,k} - \\bar{Y}_{0,k}` for child ``k``.
 
     References
     ----------
     Domingos, P. and Hulten, G. (2000). Mining high-speed data streams.
-    Proceedings of KDD, 71-80.
+    KDD, 71-80.
 
     Wager, S. and Athey, S. (2018). Estimation and inference of heterogeneous
     treatment effects using random forests. JASA, 113(523), 1228-1242.
@@ -187,7 +295,9 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         tau: float = 0.05,
         max_depth: int | None = 10,
         min_arm_samples: int = 5,
+        mtry: int | None = None,
         outcome_range: float = 10.0,
+        clip_ps: float = 0.1,
         seed: int | None = None,
     ) -> None:
         self.grace_period    = grace_period
@@ -195,9 +305,12 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         self.tau             = tau
         self.max_depth       = max_depth
         self.min_arm_samples = min_arm_samples
+        self.mtry            = mtry
         self.outcome_range   = outcome_range
+        self.clip_ps         = clip_ps
         self.seed            = seed
 
+        self._rng = random.Random(seed)
         self._root: _Node = _Node()
         self._n_seen: int = 0
         self._ate_stats: RunningStats = RunningStats()
@@ -218,6 +331,10 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
     ) -> None:
         """Process one observation and potentially grow the tree.
 
+        Uses a predict-first-then-learn protocol: all three leaf models
+        (treated, control, propensity) predict *before* being updated, so the
+        DR pseudo-outcome is computed from out-of-sample predictions.
+
         Parameters
         ----------
         x : dict
@@ -227,16 +344,43 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         outcome : float
             Observed outcome.
         propensity : float or None
-            Ignored (trees do not use propensity scores internally).
+            If provided, uses this logged propensity instead of the leaf PS
+            model for the DR correction.
         """
         self._n_seen += 1
         node, depth = self._route(x)
 
-        # Update leaf outcome stats
+        # ── Predict-first: all models predict before any update ─────────────
+        mu1 = node.treated_model.predict_one(x)
+        mu0 = node.control_model.predict_one(x)
+
+        if propensity is not None:
+            p_hat = max(self.clip_ps, min(1.0 - self.clip_ps, propensity))
+        else:
+            raw = node.ps_model.predict_proba_one(x)
+            p_hat = max(self.clip_ps, min(1.0 - self.clip_ps, raw.get(1, 0.5)))
+
+        # ── DR pseudo-outcome ────────────────────────────────────────────────
+        psi = (
+            mu1 - mu0
+            + treatment * (outcome - mu1) / p_hat
+            - (1 - treatment) * (outcome - mu0) / (1.0 - p_hat)
+        )
+
+        # ── Update leaf-level statistics ─────────────────────────────────────
         node.stats.update(outcome, treatment)
+        node.dr_stats.update(psi)
         node.n_since_split += 1
 
-        # Update per-feature split statistics for this leaf
+        # ── Learn-after: update models on current observation ────────────────
+        if treatment == 1:
+            node.treated_model.learn_one(x, outcome)
+        else:
+            node.control_model.learn_one(x, outcome)
+        if propensity is None:
+            node.ps_model.learn_one(x, treatment)
+
+        # ── Update per-feature split statistics ──────────────────────────────
         leaf_id = id(node)
         if leaf_id not in self._leaf_split_stats:
             self._leaf_split_stats[leaf_id] = {}
@@ -245,16 +389,16 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
                 self._leaf_split_stats[leaf_id][feat] = _FeatureSplitStats()
             self._leaf_split_stats[leaf_id][feat].update(val, outcome, treatment)
 
-        # Update global ATE estimate
-        self._ate_stats.update(node.stats.cate)
+        # ── Update global ATE estimate (DR-corrected) ─────────────────────
+        self._ate_stats.update(psi)
 
-        # Attempt split
+        # ── Attempt split ────────────────────────────────────────────────────
         if node.n_since_split >= self.grace_period:
             if self.max_depth is None or depth < self.max_depth:
                 self._try_split(node, depth)
 
     def predict_one(self, x: dict) -> float:
-        """Predict CATE for a single unit by routing to the appropriate leaf.
+        """Predict CATE for a single unit using the leaf's linear models.
 
         Parameters
         ----------
@@ -264,10 +408,11 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         Returns
         -------
         float
-            Estimated CATE (mean-difference in leaf outcomes by arm).
+            Estimated CATE: ``mu1(x) - mu0(x)`` from the leaf's linear models
+            when enough per-arm data exists; DR-corrected mean otherwise.
         """
         node, _ = self._route(x)
-        return node.stats.cate
+        return node.predict_cate(x, self.min_arm_samples)
 
     # ------------------------------------------------------------------
     # Tree internals
@@ -283,56 +428,6 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
             depth += 1
         return node, depth
 
-    def _split_score(self, node: _Node, feat: str) -> float:
-        """Compute the causal split score for ``feat`` at its running-mean threshold.
-
-        Returns the weighted between-child CATE variance (higher = better split).
-        Returns ``-inf`` if there is insufficient data to estimate either child's CATE.
-
-        Parameters
-        ----------
-        node : _Node
-            The leaf node to evaluate.
-        feat : str
-            Feature name to evaluate as a split candidate.
-
-        Returns
-        -------
-        float
-            Weighted CATE variance between the two children.
-        """
-        leaf_id = id(node)
-        split_data = self._leaf_split_stats.get(leaf_id, {}).get(feat)
-        if split_data is None:
-            return float("-inf")
-
-        left  = split_data.left
-        right = split_data.right
-
-        # Require enough per-arm data in both children
-        if (left.treated.n  < self.min_arm_samples or
-                left.control.n  < self.min_arm_samples or
-                right.treated.n < self.min_arm_samples or
-                right.control.n < self.min_arm_samples):
-            return float("-inf")
-
-        n_left  = left.n
-        n_right = right.n
-        n_total = n_left + n_right
-        if n_total == 0:
-            return float("-inf")
-
-        cate_global = node.stats.cate
-        cate_left   = left.cate
-        cate_right  = right.cate
-
-        # Weighted between-child CATE variance: maximise this
-        score = (
-            (n_left  / n_total) * (cate_left  - cate_global) ** 2 +
-            (n_right / n_total) * (cate_right - cate_global) ** 2
-        )
-        return score
-
     def _try_split(self, node: _Node, depth: int) -> None:
         """Evaluate causal split candidates and split if the Hoeffding bound allows."""
         leaf_id    = id(node)
@@ -340,32 +435,39 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         if not feat_stats:
             return
 
+        # Use DR-corrected CATE as the global baseline τ
+        cate_global = node.dr_stats.mean if node.dr_stats.n >= 2 else node.stats.cate
+
         n = node.n_since_split
         best_score   = float("-inf")
         best_feat    = None
+        best_thresh  = 0.0
         second_score = float("-inf")
 
-        for feat in feat_stats:
-            score = self._split_score(node, feat)
+        # Optional mtry: randomly restrict candidate features
+        candidates = list(feat_stats.keys())
+        if self.mtry is not None and self.mtry < len(candidates):
+            candidates = self._rng.sample(candidates, self.mtry)
+
+        for feat in candidates:
+            score, thresh = feat_stats[feat].best_split(cate_global, self.min_arm_samples)
             if score > best_score:
                 second_score = best_score
                 best_score   = score
                 best_feat    = feat
+                best_thresh  = thresh
             elif score > second_score:
                 second_score = score
 
         if best_feat is None or best_score <= 0:
             return
 
-        # Hoeffding bound: R = outcome_range (max |CATE| estimate)
-        # Score is a CATE variance, bounded by outcome_range^2
         R = self.outcome_range
         hoeffding_bound = math.sqrt(R * R * math.log(1.0 / self.delta) / (2.0 * n))
 
         gap = best_score - max(second_score, 0.0)
         if gap > hoeffding_bound or hoeffding_bound < self.tau:
-            thresh = feat_stats[best_feat].threshold
-            self._split_node(node, best_feat, thresh, leaf_id)
+            self._split_node(node, best_feat, best_thresh, leaf_id)
 
     def _split_node(
         self,
@@ -392,6 +494,7 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         return self._count_nodes(self._root)
 
     def _count_nodes(self, node: _Node | None) -> int:
+        """Recursively count all nodes."""
         if node is None:
             return 0
         return 1 + self._count_nodes(node.left) + self._count_nodes(node.right)
@@ -402,6 +505,7 @@ class CausalHoeffdingTree(BaseOnlineEstimator):
         return self._count_leaves(self._root)
 
     def _count_leaves(self, node: _Node | None) -> int:
+        """Recursively count leaf nodes."""
         if node is None:
             return 0
         if node.is_leaf:

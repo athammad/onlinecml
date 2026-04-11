@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 import random
 
+from river.drift import ADWIN
+
 from onlinecml.base.base_estimator import BaseOnlineEstimator
 from onlinecml.base.running_stats import RunningStats
 from onlinecml.forests.causal_hoeffding_tree import CausalHoeffdingTree
@@ -13,10 +15,14 @@ from onlinecml.forests.causal_hoeffding_tree import CausalHoeffdingTree
 class OnlineCausalForest(BaseOnlineEstimator):
     """Ensemble of CausalHoeffdingTrees for online CATE estimation.
 
-    Grows ``n_trees`` independent ``CausalHoeffdingTree`` instances
-    in parallel. Each tree receives a random subsample of each observation
-    (Poisson bootstrap / "online bagging"), following Oza (2001). The
-    forest CATE prediction is the mean of all tree predictions.
+    Grows ``n_trees`` independent ``CausalHoeffdingTree`` instances in parallel.
+    Each tree receives a random subsample of each observation (Poisson bootstrap,
+    Oza 2001).  The forest CATE prediction is the mean of all tree predictions.
+
+    Each tree is monitored for concept drift via an ADWIN detector on its
+    normalised prediction signal.  On drift detection the affected tree is
+    reset and starts growing from scratch, while the remaining trees continue
+    uninterrupted.
 
     Parameters
     ----------
@@ -31,30 +37,41 @@ class OnlineCausalForest(BaseOnlineEstimator):
     max_depth : int or None
         Maximum tree depth. Default 10.
     subsample_rate : float
-        Expected fraction of observations each tree sees (Poisson
-        bootstrap parameter ``lambda``). 1.0 = standard online bagging.
-        Default 1.0.
+        Expected number of times each tree sees each observation (Poisson
+        bootstrap ``lambda``). 1.0 = standard online bagging. Default 1.0.
+    mtry : int or None
+        Number of features randomly considered at each split attempt per tree.
+        ``None`` = all features. ``int(sqrt(p))`` is a common choice when many
+        features are informative. Default None.
     min_arm_samples : int
         Passed to each tree. Default 5.
+    outcome_range : float
+        Passed to each tree. Upper bound on ``|CATE|`` for calibrating the
+        Hoeffding bound. Default 10.0.
+    clip_ps : float
+        Propensity clipping bounds for DR correction within leaves. Default 0.1.
+    drift_detection : bool
+        If ``True``, attach an ADWIN detector to each tree and reset trees on
+        drift. Default True.
     seed : int or None
         Random seed for the subsampling RNG.
 
     Notes
     -----
-    Online bagging (Oza 2001): each incoming observation is presented to
-    tree ``k`` exactly ``Poisson(subsample_rate)`` times.  This simulates
-    drawing with replacement from the stream.  The Poisson weight is
-    approximated by drawing from ``Poisson(lambda)`` using the RNG
-    ``self._rng``.
+    Online bagging (Oza 2001): each incoming observation is presented to tree
+    ``k`` exactly ``Poisson(subsample_rate)`` times.
+
+    Drift detection follows the ARF approach: each tree's prediction is
+    normalised to ``[0, 1]`` using the running ``mean ± 3σ`` window and fed to
+    ADWIN.  When ADWIN raises an alarm, the tree and its detector are reset.
 
     References
     ----------
-    Oza, N.C. (2001). Online bagging and boosting. Proceedings of the
-    American Statistical Association, 229-234.
+    Oza, N.C. (2001). Online bagging and boosting. Proc. American Statistical
+    Association, 229-234.
 
-    Wager, S. and Athey, S. (2018). Estimation and inference of heterogeneous
-    treatment effects using random forests. Journal of the American
-    Statistical Association, 113(523), 1228-1242.
+    Gomes, H.M. et al. (2017). Adaptive random forests for evolving data stream
+    classification. Machine Learning, 106(9), 1469-1495.
 
     Examples
     --------
@@ -75,7 +92,11 @@ class OnlineCausalForest(BaseOnlineEstimator):
         tau: float = 0.05,
         max_depth: int | None = 10,
         subsample_rate: float = 1.0,
+        mtry: int | None = None,
         min_arm_samples: int = 5,
+        outcome_range: float = 10.0,
+        clip_ps: float = 0.1,
+        drift_detection: bool = True,
         seed: int | None = None,
     ) -> None:
         self.n_trees         = n_trees
@@ -84,23 +105,31 @@ class OnlineCausalForest(BaseOnlineEstimator):
         self.tau             = tau
         self.max_depth       = max_depth
         self.subsample_rate  = subsample_rate
+        self.mtry            = mtry
         self.min_arm_samples = min_arm_samples
+        self.outcome_range   = outcome_range
+        self.clip_ps         = clip_ps
+        self.drift_detection = drift_detection
         self.seed            = seed
 
         self._rng = random.Random(seed)
         self._trees: list[CausalHoeffdingTree] = [
-            CausalHoeffdingTree(
-                grace_period    = grace_period,
-                delta           = delta,
-                tau             = tau,
-                max_depth       = max_depth,
-                min_arm_samples = min_arm_samples,
-                seed            = (seed + i) if seed is not None else None,
-            )
-            for i in range(n_trees)
+            self._new_tree(i) for i in range(n_trees)
         ]
         self._n_seen: int = 0
         self._ate_stats: RunningStats = RunningStats()
+
+        # Per-tree drift monitoring
+        self._drift_detectors: list[ADWIN] | None = (
+            [ADWIN() for _ in range(n_trees)] if drift_detection else None
+        )
+        self._pred_stats: list[RunningStats] | None = (
+            [RunningStats() for _ in range(n_trees)] if drift_detection else None
+        )
+
+    # ------------------------------------------------------------------
+    # BaseOnlineEstimator interface
+    # ------------------------------------------------------------------
 
     def learn_one(
         self,
@@ -111,6 +140,9 @@ class OnlineCausalForest(BaseOnlineEstimator):
     ) -> None:
         """Process one observation, updating all trees via online bagging.
 
+        After each tree update, optionally checks for concept drift using its
+        ADWIN detector and resets the tree if drift is detected.
+
         Parameters
         ----------
         x : dict
@@ -120,21 +152,33 @@ class OnlineCausalForest(BaseOnlineEstimator):
         outcome : float
             Observed outcome.
         propensity : float or None
-            Ignored (trees do not use propensity internally).
+            If provided, passed to each tree's DR correction.
         """
         self._n_seen += 1
 
-        for tree in self._trees:
-            # Online bagging: Poisson(subsample_rate) replications
+        for i, tree in enumerate(self._trees):
             k = self._poisson(self.subsample_rate)
             for _ in range(k):
-                tree.learn_one(x, treatment, outcome)
+                tree.learn_one(x, treatment, outcome, propensity)
 
-        cate_hat = self.predict_one(x)
-        self._ate_stats.update(cate_hat)
+            # ── Drift detection ─────────────────────────────────────────────
+            if self._drift_detectors is not None:
+                pred  = tree.predict_one(x)
+                stats = self._pred_stats[i]  # type: ignore[index]
+                stats.update(pred)
+                if stats.n > 1:
+                    sigma      = stats.std or 1e-8
+                    normalised = (pred - stats.mean) / (6.0 * sigma) + 0.5
+                    normalised = max(0.0, min(1.0, normalised))
+                    if self._drift_detectors[i].update(normalised):
+                        self._trees[i]            = self._new_tree(i)
+                        self._drift_detectors[i]  = ADWIN()
+                        self._pred_stats[i]       = RunningStats()  # type: ignore[index]
+
+        self._ate_stats.update(self.predict_one(x))
 
     def predict_one(self, x: dict) -> float:
-        """Predict CATE for a single unit as the mean of all tree predictions.
+        """Predict CATE as the mean across all tree predictions.
 
         Parameters
         ----------
@@ -144,8 +188,7 @@ class OnlineCausalForest(BaseOnlineEstimator):
         Returns
         -------
         float
-            Mean CATE prediction across all trees. Returns ``0.0`` when no
-            tree has learned any data yet.
+            Mean CATE across all trees. Returns ``0.0`` when untrained.
         """
         preds = [t.predict_one(x) for t in self._trees]
         return sum(preds) / len(preds) if preds else 0.0
@@ -168,8 +211,44 @@ class OnlineCausalForest(BaseOnlineEstimator):
     # Internals
     # ------------------------------------------------------------------
 
+    def _new_tree(self, index: int) -> CausalHoeffdingTree:
+        """Instantiate a fresh ``CausalHoeffdingTree`` for position ``index``.
+
+        Parameters
+        ----------
+        index : int
+            Tree index, used to derive a per-tree seed from ``self.seed``.
+
+        Returns
+        -------
+        CausalHoeffdingTree
+            A freshly initialised tree with this forest's hyperparameters.
+        """
+        return CausalHoeffdingTree(
+            grace_period    = self.grace_period,
+            delta           = self.delta,
+            tau             = self.tau,
+            max_depth       = self.max_depth,
+            min_arm_samples = self.min_arm_samples,
+            mtry            = self.mtry,
+            outcome_range   = self.outcome_range,
+            clip_ps         = self.clip_ps,
+            seed            = (self.seed + index) if self.seed is not None else None,
+        )
+
     def _poisson(self, lam: float) -> int:
-        """Draw from Poisson(lam) using Knuth's algorithm (lam ≤ 20)."""
+        """Draw from Poisson(lam) using Knuth's algorithm (lam ≤ 20).
+
+        Parameters
+        ----------
+        lam : float
+            Poisson rate parameter.
+
+        Returns
+        -------
+        int
+            A non-negative integer sample from Poisson(lam).
+        """
         if lam <= 0:
             return 0
         L = math.exp(-lam)
