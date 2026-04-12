@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="OnlineCML" width="300"/>
+</p>
+
 > Causal inference for the real world — one observation at a time.
 
 [![CI](https://github.com/athammad/onlinecml/actions/workflows/ci.yml/badge.svg)](https://github.com/athammad/onlinecml/actions/workflows/ci.yml)

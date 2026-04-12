@@ -6,6 +6,8 @@ repo_name: athammad/onlinecml
 
 theme:
   name: material
+  logo: assets/logo_small.png
+  favicon: assets/logo_small.png
   palette:
     - scheme: default
       primary: indigo
