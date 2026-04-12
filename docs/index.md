@@ -4,7 +4,6 @@
 
 > **Causal inference for the real world — one observation at a time.**
 
-[![CI](https://github.com/athammad/onlinecml/actions/workflows/ci.yml/badge.svg)](https://github.com/athammad/onlinecml/actions/workflows/ci.yml)
 
 OnlineCML is the first Python library for causal inference in a purely online,
 one-observation-at-a-time setting. It is the streaming counterpart to EconML,
