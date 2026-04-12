@@ -6,6 +6,7 @@ repo_name: athammad/onlinecml
 
 theme:
   name: material
+  logo: assets/logo_small.png
   favicon: assets/logo_small.png
   palette:
     - scheme: default
@@ -91,6 +92,9 @@ markdown_extensions:
   - md_in_html
   - pymdownx.arithmatex:
       generic: true
+
+extra_css:
+  - stylesheets/extra.css
 
 extra_javascript:
   - javascripts/mathjax.js

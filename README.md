@@ -1,6 +1,6 @@
 <img src="docs/assets/logo_small.png" alt="OnlineCML" width="180" align="right"/>
 
-> Causal inference for the real world — one observation at a time.
+*Causal inference for the real world — one observation at a time.*
 
 [![CI](https://github.com/athammad/onlinecml/actions/workflows/ci.yml/badge.svg)](https://github.com/athammad/onlinecml/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)](https://github.com/athammad/onlinecml)
