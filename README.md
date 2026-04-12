@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/assets/logo.png" alt="OnlineCML" width="300"/>
-</p>
+<img src="docs/assets/logo_small.png" alt="OnlineCML" width="180" align="right"/>
 
 > Causal inference for the real world — one observation at a time.
 
