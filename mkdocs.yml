@@ -7,7 +7,7 @@ repo_name: athammad/onlinecml
 theme:
   name: material
   favicon: assets/logo_small.png
-palette:
+  palette:
     - scheme: default
       primary: indigo
       accent: indigo
