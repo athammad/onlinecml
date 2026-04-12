@@ -12,7 +12,11 @@
       "Read(//home/lucifer/pCloudDrive/onlinecml/**)",
       "Bash(ls -la examples/notebooks/*.ipynb)",
       "Bash(python full_test.py)",
-      "Bash(pytest tests/unit/test_forests.py -x -q)"
+      "Bash(pytest tests/unit/test_forests.py -x -q)",
+      "Bash(mkdocs gh-deploy:*)",
+      "Bash(pyenv shell:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "additionalDirectories": [
       "/tmp"
