@@ -1,0 +1,6 @@
+/* Give the header logo a white pill background so it's visible on the indigo navbar */
+.md-header__button.md-logo img {
+  background: white;
+  border-radius: 6px;
+  padding: 3px;
+}
