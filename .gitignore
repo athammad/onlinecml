@@ -1,6 +1,8 @@
 full_test.py
 CLAUDE.md
 OnlineCML_full_plan.md
+paper/
+.claude/
 
 __pycache__/
 *.py[cod]
