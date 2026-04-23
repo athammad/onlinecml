@@ -33,9 +33,10 @@ class OnlineRLearner(BaseOnlineEstimator):
 
     Parameters
     ----------
-    ps_model : OnlinePropensityScore or None
-        Propensity score model ``P(W=1|X)``.
-        Defaults to ``OnlinePropensityScore(LogisticRegression())``.
+    ps_model : river.base.Classifier, OnlinePropensityScore, or None
+        Propensity score model ``P(W=1|X)``. Raw River classifiers and
+        pipelines are automatically wrapped in ``OnlinePropensityScore``.
+        If None, defaults to ``OnlinePropensityScore(LogisticRegression())``.
     outcome_model : river.base.Regressor or None
         Outcome model ``E[Y|X]``. Defaults to ``LinearRegression()``.
     cate_model : river.base.Regressor or None
@@ -81,13 +82,16 @@ class OnlineRLearner(BaseOnlineEstimator):
 
     def __init__(
         self,
-        ps_model: OnlinePropensityScore | None = None,
+        ps_model: "OnlinePropensityScore | object | None" = None,
         outcome_model=None,
         cate_model=None,
         min_residual: float = 0.05,
     ) -> None:
-        self.ps_model = ps_model if ps_model is not None else OnlinePropensityScore(
-            LogisticRegression()
+        self.ps_model = (
+            ps_model if isinstance(ps_model, OnlinePropensityScore)
+            else OnlinePropensityScore(
+                ps_model if ps_model is not None else LogisticRegression()
+            )
         )
         self.outcome_model = outcome_model if outcome_model is not None else LinearRegression()
         self.cate_model = cate_model if cate_model is not None else LinearRegression()

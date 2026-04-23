@@ -17,9 +17,10 @@ class OnlineAIPW(BaseOnlineEstimator):
 
     Parameters
     ----------
-    ps_model : OnlinePropensityScore or None
-        Propensity score model. Defaults to
-        ``OnlinePropensityScore(LogisticRegression())``.
+    ps_model : river.base.Classifier, OnlinePropensityScore, or None
+        Propensity score model. Raw River classifiers and pipelines are
+        automatically wrapped in ``OnlinePropensityScore``. If None,
+        defaults to ``OnlinePropensityScore(LogisticRegression())``.
     treated_model : river.base.Regressor or None
         Outcome model for treated units ``E[Y|X, W=1]``. Defaults to
         ``LinearRegression()``.
@@ -73,7 +74,7 @@ class OnlineAIPW(BaseOnlineEstimator):
 
     def __init__(
         self,
-        ps_model: OnlinePropensityScore | None = None,
+        ps_model: "OnlinePropensityScore | object | None" = None,
         treated_model=None,
         control_model=None,
         clip_min: float = 0.01,
@@ -81,8 +82,12 @@ class OnlineAIPW(BaseOnlineEstimator):
         warmup: int = 0,
         forgetting_factor: float = 1.0,
     ) -> None:
-        self.ps_model = ps_model if ps_model is not None else OnlinePropensityScore(
-            LogisticRegression(), clip_min=clip_min, clip_max=clip_max
+        self.ps_model = (
+            ps_model if isinstance(ps_model, OnlinePropensityScore)
+            else OnlinePropensityScore(
+                ps_model if ps_model is not None else LogisticRegression(),
+                clip_min=clip_min, clip_max=clip_max,
+            )
         )
         self.treated_model = treated_model if treated_model is not None else LinearRegression()
         self.control_model = control_model if control_model is not None else LinearRegression()

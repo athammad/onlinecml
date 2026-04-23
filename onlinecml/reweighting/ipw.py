@@ -17,9 +17,10 @@ class OnlineIPW(BaseOnlineEstimator):
 
     Parameters
     ----------
-    ps_model : OnlinePropensityScore or None
-        Propensity score model. If None, defaults to
-        ``OnlinePropensityScore(LogisticRegression())``.
+    ps_model : river.base.Classifier, OnlinePropensityScore, or None
+        Propensity score model. Raw River classifiers and pipelines are
+        automatically wrapped in ``OnlinePropensityScore``. If None,
+        defaults to ``OnlinePropensityScore(LogisticRegression())``.
     clip_min : float
         Lower clip bound for propensity scores. Default 0.01.
     clip_max : float
@@ -78,15 +79,19 @@ class OnlineIPW(BaseOnlineEstimator):
 
     def __init__(
         self,
-        ps_model: OnlinePropensityScore | None = None,
+        ps_model: "OnlinePropensityScore | object | None" = None,
         clip_min: float = 0.01,
         clip_max: float = 0.99,
         normalize: bool = False,
         warmup: int = 0,
         forgetting_factor: float = 1.0,
     ) -> None:
-        self.ps_model = ps_model if ps_model is not None else OnlinePropensityScore(
-            LogisticRegression(), clip_min=clip_min, clip_max=clip_max
+        self.ps_model = (
+            ps_model if isinstance(ps_model, OnlinePropensityScore)
+            else OnlinePropensityScore(
+                ps_model if ps_model is not None else LogisticRegression(),
+                clip_min=clip_min, clip_max=clip_max,
+            )
         )
         self.clip_min = clip_min
         self.clip_max = clip_max

@@ -36,9 +36,11 @@ class OnlineXLearner(BaseOnlineEstimator):
     tau0_model : river.base.Regressor or None
         CATE model trained on control units' imputed effects.
         Defaults to ``LinearRegression()``.
-    ps_model : OnlinePropensityScore or None
-        Propensity score model for the weighted combination.
-        Defaults to ``OnlinePropensityScore(LogisticRegression())``.
+    ps_model : river.base.Classifier, OnlinePropensityScore, or None
+        Propensity score model for the weighted combination. Raw River
+        classifiers and pipelines are automatically wrapped in
+        ``OnlinePropensityScore``. If None, defaults to
+        ``OnlinePropensityScore(LogisticRegression())``.
 
     Notes
     -----
@@ -71,8 +73,11 @@ class OnlineXLearner(BaseOnlineEstimator):
         self.mu0_model = mu0_model if mu0_model is not None else LinearRegression()
         self.tau1_model = tau1_model if tau1_model is not None else LinearRegression()
         self.tau0_model = tau0_model if tau0_model is not None else LinearRegression()
-        self.ps_model = ps_model if ps_model is not None else OnlinePropensityScore(
-            LogisticRegression()
+        self.ps_model = (
+            ps_model if isinstance(ps_model, OnlinePropensityScore)
+            else OnlinePropensityScore(
+                ps_model if ps_model is not None else LogisticRegression()
+            )
         )
         # Non-constructor state
         self._n_seen: int = 0

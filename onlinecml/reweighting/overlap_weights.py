@@ -38,9 +38,10 @@ class OnlineOverlapWeights(BaseOnlineEstimator):
 
     Parameters
     ----------
-    ps_model : OnlinePropensityScore or None
-        Propensity score model. Defaults to
-        ``OnlinePropensityScore(LogisticRegression())``.
+    ps_model : river.base.Classifier, OnlinePropensityScore, or None
+        Propensity score model. Raw River classifiers and pipelines are
+        automatically wrapped in ``OnlinePropensityScore``. If None,
+        defaults to ``OnlinePropensityScore(LogisticRegression())``.
 
     Notes
     -----
@@ -65,9 +66,12 @@ class OnlineOverlapWeights(BaseOnlineEstimator):
     True
     """
 
-    def __init__(self, ps_model: OnlinePropensityScore | None = None) -> None:
-        self.ps_model = ps_model if ps_model is not None else OnlinePropensityScore(
-            LogisticRegression()
+    def __init__(self, ps_model: "OnlinePropensityScore | object | None" = None) -> None:
+        self.ps_model = (
+            ps_model if isinstance(ps_model, OnlinePropensityScore)
+            else OnlinePropensityScore(
+                ps_model if ps_model is not None else LogisticRegression()
+            )
         )
         # Non-constructor state
         self._n_seen: int = 0
